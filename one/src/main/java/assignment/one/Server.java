@@ -196,6 +196,9 @@ public class Server {
 			return false;
 		}
 		
+		// Note which cell we're at now.
+		int prev_cell = cell;
+		
 		// Fast-forward through the text to the first separator 0.
 		while (true) {
 			// If cell equals length, the message is invalid,
@@ -204,8 +207,13 @@ public class Server {
 				return false;
 			}
 			
-			// If this is the first separator 0, break loop and go to next cell.
+			// If this is the first separator 0, break loop and go to next cell
+			// Unless the first separator zero is the cell we started at,
+			// then the message is invalid
 			if (receiveData[cell] == 0) {
+				if (cell == prev_cell) {
+					return false;
+				}
 				cell++;
 				break;
 			} else {
@@ -214,6 +222,9 @@ public class Server {
 			}
 		}
 		
+		// Note which cell we're at now.
+		prev_cell = cell;
+				
 		// Fast-forward through the text to the second separator 0.
 		while (true) {
 			// If cell equals length, the message is invalid,
@@ -223,7 +234,12 @@ public class Server {
 			}
 			
 			// If this is the second separator 0, break loop and go to next cell.
+			// Unless the first separator zero is the cell we started at,
+			// then the message is invalid
 			if (receiveData[cell] == 0) {
+				if (cell == prev_cell) {
+					return false;
+				}
 				cell++;
 				break;
 			} else {
