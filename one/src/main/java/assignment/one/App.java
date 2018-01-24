@@ -1,5 +1,6 @@
 package assignment.one;
 
+import java.net.InetAddress;
 import java.util.Scanner;
 
 /**
@@ -9,22 +10,33 @@ import java.util.Scanner;
  */
 public class App 
 {
+	InetAddress address;
     public static void main( String[] args )
     {
     	Scanner s = new Scanner(System.in);
     	System.out.println("Would you like to run the server, intermediate, or client");
     	String input = s.nextLine();
-    	s.close();
+ 
     	
     	try {
     		if (input.equals("server")) {
-        		Server server = new Server();
+        		new Server();
         	
         	} else if (input.equals("intermediate")) {
-        		Intermediate i = new Intermediate(24,69);
-        		i.loop();
+        		System.out.println("Which source port would you like to use?");
+        		String sourcePort = s.nextLine();
+        		System.out.println("Which destination port would you like to use?");
+        		String destinationPort = s.nextLine();
+        		System.out.println("Specify the ip address of the server.");
+        		String destinationIP = s.nextLine();
+        		new Intermediate(sourcePort, destinationIP, destinationPort);
         	} else if (input.equals("client")) {
-        		Client c = new Client(24);
+        		System.out.println("Which destination port would you like to use?");
+        		String destinationPort = s.nextLine();
+        		System.out.println("Specify the ip address of the intermediate.");
+        		String destinationIP = s.nextLine();
+        		new Client(destinationIP, destinationPort);
+     
         		c.send(false, "Thompson", "Octet");
         		c.send(true, "sKLFasjflksajf", "ocTET"); 
         		c.send(false, "Delicious", "Netascii");
