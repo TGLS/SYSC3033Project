@@ -56,6 +56,8 @@ public class ClientConnectionThread implements Runnable {
 		// Now that the data has been set up, let's form the packet.
 		sendPacket = new DatagramPacket(sendData, 4, receivePacket.getAddress(),
 				receivePacket.getPort());
+		
+		System.out.println("RECEIVEP PORT = " + receivePacket.getPort());
 	}
 	
 	private void printRequest() {

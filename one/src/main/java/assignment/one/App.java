@@ -11,8 +11,7 @@ public class App
     {
     	try {
     		if (args[0].equals("server")) {
-        		Server s = new Server(Integer.parseInt(args[1]));
-        		s.loop();
+        		Server s = new Server();
         	} else if (args[0].equals("intermediate")) {
         		Intermediate i = new Intermediate(Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]));
         		i.loop();
