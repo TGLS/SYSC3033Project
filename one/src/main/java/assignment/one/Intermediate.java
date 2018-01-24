@@ -22,10 +22,10 @@ public class Intermediate {
 	
 	private final static int max_buffer = 120;
 	
-	public Intermediate(int sourcePort, String destinationIP, int destinationPort) {
+	public Intermediate(int sourcePort, int destinationPort) {
 		this.serverPort = destinationPort;
 		try {
-			serverAddress = InetAddress.getByName(destinationIP);
+			serverAddress = InetAddress.getLocalHost();
 			sendReceiveSocket = new DatagramSocket();
 		} catch (UnknownHostException e) {
 			// Print a stack trace and exit.

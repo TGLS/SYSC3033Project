@@ -1,5 +1,7 @@
 package assignment.one;
 
+import java.util.Scanner;
+
 /**
  * This short class has two functions:
  * 1) Determine whether the program has been called for Client, Server or Intermediate
@@ -9,14 +11,20 @@ public class App
 {
     public static void main( String[] args )
     {
+    	Scanner s = new Scanner(System.in);
+    	System.out.println("Would you like to run the server, intermediate, or client");
+    	String input = s.nextLine();
+    	s.close();
+    	
     	try {
-    		if (args[0].equals("server")) {
-        		Server s = new Server();
-        	} else if (args[0].equals("intermediate")) {
-        		Intermediate i = new Intermediate(Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]));
+    		if (input.equals("server")) {
+        		Server server = new Server();
+        	
+        	} else if (input.equals("intermediate")) {
+        		Intermediate i = new Intermediate(24,69);
         		i.loop();
-        	} else if (args[0].equals("client")) {
-        		Client c = new Client(args[1], Integer.parseInt(args[2]));
+        	} else if (input.equals("client")) {
+        		Client c = new Client(24);
         		c.send(false, "Thompson", "Octet");
         		c.send(true, "sKLFasjflksajf", "ocTET"); 
         		c.send(false, "Delicious", "Netascii");
