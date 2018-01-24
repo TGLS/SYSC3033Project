@@ -13,13 +13,14 @@ public class ClientConnectionThread implements Runnable {
 	private DatagramPacket sendPacket;
 	private byte[] sendData;
 	
+	boolean portAvailable = true;
+	
 	private final static int max_buffer = 120;
 
 	
 	public ClientConnectionThread(DatagramPacket receivePacket) {
 		this.receivePacket = receivePacket;
 		this.receiveData = receivePacket.getData();
-		
 	}
 	
 	public void run() {
@@ -55,9 +56,7 @@ public class ClientConnectionThread implements Runnable {
 		
 		// Now that the data has been set up, let's form the packet.
 		sendPacket = new DatagramPacket(sendData, 4, receivePacket.getAddress(),
-				receivePacket.getPort());
-		
-		System.out.println("RECEIVEP PORT = " + receivePacket.getPort());
+				receivePacket.getPort());	
 	}
 	
 	private void printRequest() {
@@ -128,6 +127,8 @@ public class ClientConnectionThread implements Runnable {
 		// Print the checksum
 		System.out.println("");
 		System.out.println("Checksum: " + String.format("%08X", checksum));
+		System.out.println("THIS IS THE SERVER");
+
 	}
 	
 	private void printResponse() {
@@ -139,9 +140,21 @@ public class ClientConnectionThread implements Runnable {
 		System.out.print(String.format("%02X", sendData[1]));
 		System.out.print(String.format("%02X", sendData[2]));
 		System.out.println(String.format("%02X", sendData[3]));
+		System.out.println("THIS IS THE SERVER");
 	}
 
-	private void sendResponse() {
+	private synchronized void sendResponse() {
+		// Wait for the port to become available
+		while(!portAvailable) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				sendSocket.close();
+				System.exit(1);
+			}
+		}
+		
 		// Here, we're going to create a new socket (the notional sendSocket)
 		// Send the response packet, and then close the socket.
 		try {
@@ -162,6 +175,10 @@ public class ClientConnectionThread implements Runnable {
 		// I'd have put this in a finally block, but we exit on Exception,
 		// so that won't work.
 		sendSocket.close();
+		
+		// Allow for other ClientConnectionThreads to compete for the socket
+		portAvailable = true;
+		notify();
 	}
 	
 	private boolean validateRequest() {
