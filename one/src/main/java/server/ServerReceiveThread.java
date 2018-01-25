@@ -7,15 +7,11 @@ import java.net.SocketException;
 
 
 public class ServerReceiveThread implements Runnable{
-	//The Purpose of this thread is to Listen for the "shutdown" 
-	//message from the server's operator this will trigger a graceful shutdown
 	private DatagramSocket receiveSocket;
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
 	
 	private final static int max_buffer = 120;
-	
-	
 	
 	public ServerReceiveThread(int sourcePort) {
 		// Create a DatagramSocket for reception with the port number you were given.
@@ -27,22 +23,17 @@ public class ServerReceiveThread implements Runnable{
 		e.printStackTrace();
 		System.exit(1);
 		}
-
 	}
 	
 	public void run() {
 		
 		
 		while(true) {
-			
-			//Wait to receive a request from the client 
+			 //Wait to receive a request from the client 
 			receiveRequest();
-			
-			//once the request is received create a connection thread
-			//this will deal with the validation and file transfer
-			Thread returnThread = new Thread(new ServerResponseThread(receivePacket),"returnThread");
-			returnThread.start();
-			
+			//Create a thread to deal with the request
+			createThread();	
+	
 		}
 		
 	}
@@ -69,8 +60,12 @@ public class ServerReceiveThread implements Runnable{
 		}
 	}
 	
-	
-	
+	private void createThread() {
+		//This function creates and runs a thread to respond to the Client 
+		
+		Thread repsonseThread = new Thread(new ServerResponseThread(receivePacket),"repsonseThread");
+		repsonseThread.start();
+	}
 	
 
 }

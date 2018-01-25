@@ -6,7 +6,7 @@ public class Server {
 	private boolean running = true;
 	
 	public Server(int sourcePort) {
-		// This method will start the server receive message and then proceed to 
+		// This method will start the server receive thread and then proceed to 
 		// Run the Server CLI: 
 		
 		
@@ -16,7 +16,7 @@ public class Server {
 		
 		Scanner s = new Scanner(System.in);
 		while (running) {
-			// THE CLI WILL GO HERE .........
+			// ************** THE CLI WILL GO HERE  **************
 			
 		
 			System.out.println("Please Enter Command >: ");

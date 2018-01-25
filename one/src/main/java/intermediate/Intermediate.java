@@ -11,13 +11,11 @@ public class Intermediate {
 	private DatagramSocket receiveSocket;
 	
 	private final static int max_buffer = 120;
-	private int sourcePort;
 	private int destinationPort;
 	private String destinationIP;
 	
 	
 	public Intermediate(int sourcePort, String destinationIP, int destinationPort) {
-		this.sourcePort = sourcePort;
 		this.destinationIP = destinationIP;
 		this.destinationPort = destinationPort;
 		
@@ -64,7 +62,6 @@ public class Intermediate {
 		}
 		
 	}
-	
 	
 	private void createThread() {
 		//This function creates a thread to deal with the interaction 
