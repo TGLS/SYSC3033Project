@@ -264,6 +264,5 @@ public class ClientConnectionThread implements Runnable {
 			return false;
 		}
 	}
-
-
+	
 }

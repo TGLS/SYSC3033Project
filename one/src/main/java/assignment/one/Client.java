@@ -77,6 +77,7 @@ public class Client {
 		// Here, we're going to create a new socket (the notional sendSocket)
 		// Send the response packet, and then close the socket.
 		try {
+			System.out.println("Trying to send a packet");
 			sendReceiveSocket.send(sendPacket);
 		} catch (IOException e) {
 			e.printStackTrace();

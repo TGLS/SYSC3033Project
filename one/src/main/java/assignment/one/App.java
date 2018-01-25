@@ -42,7 +42,7 @@ public class App
         		Client c = new Client(destinationIP, destinationPort);
      
         		c.send(false, "Thompson", "Octet");
-        		c.send(true, "sKLFasjflksajf", "ocTET"); 
+        	/*	c.send(true, "sKLFasjflksajf", "ocTET"); 
         		c.send(false, "Delicious", "Netascii");
         		c.send(true, "🍡AMA🍡AMA🍡", "netASCII");
         		c.send(false, "A miserible pile of secrets", "netAscii");
@@ -51,7 +51,7 @@ public class App
         		c.send(true, "darths1602.jpg", "OcTeT");
         		c.send(false, "Windows.iso", "Netascii");
         		c.send(true, "d3d9.dll", "netASCII");
-        		/*c.send(true, "This file name is almost certainly, perhaps with over 99% percent odds,"
+        		*//*c.send(true, "This file name is almost certainly, perhaps with over 99% percent odds,"
         				+ "far too long to be accepted by the server,"
         				+ "because it will randomly be truncated part way through", "netASCII");
         		*/
@@ -62,6 +62,7 @@ public class App
     	} catch (ArrayIndexOutOfBoundsException e) {
     		incorrectArgumentMessage();
     	}
+    	s.close();
     }
     
     private static void incorrectArgumentMessage() {
