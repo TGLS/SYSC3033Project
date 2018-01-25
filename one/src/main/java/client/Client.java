@@ -1,4 +1,4 @@
-package assignment.one;
+package client;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

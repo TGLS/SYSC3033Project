@@ -1,14 +1,18 @@
-package assignment.one;
+package apps;
 
 import java.net.InetAddress;
 import java.util.Scanner;
+
+import client.Client;
+import intermediate.Intermediate;
+import server.Server;
 
 /**
  * This short class has two functions:
  * 1) Determine whether the program has been called for Client, Server or Intermediate
  * 2) Make the correct method calls for each 
  */
-public class App 
+public class App2 
 {
 	InetAddress address;
     public static void main( String[] args )

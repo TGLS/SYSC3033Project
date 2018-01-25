@@ -1,4 +1,4 @@
-package assignment.one;
+package intermediate;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
