@@ -40,18 +40,41 @@ public class App
         		System.out.println("Which destination port would you like to use?");
         		int destinationPort = s.nextInt();
         		Client c = new Client(destinationIP, destinationPort);
-     
-        		c.send(false, "Thompson", "Octet");
-        	/*	c.send(true, "sKLFasjflksajf", "ocTET"); 
-        		c.send(false, "Delicious", "Netascii");
-        		c.send(true, "🍡AMA🍡AMA🍡", "netASCII");
-        		c.send(false, "A miserible pile of secrets", "netAscii");
-        		c.send(true, "Germany", "NetAscii");
-        		c.send(false, "irreg1672.jpg", "oCtEt");
-        		c.send(true, "darths1602.jpg", "OcTeT");
-        		c.send(false, "Windows.iso", "Netascii");
-        		c.send(true, "d3d9.dll", "netASCII");
-        		*//*c.send(true, "This file name is almost certainly, perhaps with over 99% percent odds,"
+        		
+        		Client c2 = new Client(destinationIP, destinationPort);
+        		
+        		
+        		
+        		c.send(false, "Thompson1", "Octet");
+        		c2.send(false, "Thompson2", "Octet");
+        		
+        		c.send(true, "sKLFasjflksajf1", "ocTET"); 
+        		c2.send(true, "sKLFasjflksajf2", "ocTET"); 
+        		
+        		c.send(false, "Delicious1", "Netascii");
+        		c2.send(false, "Delicious2", "Netascii");
+        		
+        		c.send(true, "🍡AMA🍡AMA🍡1", "netASCII");
+        		c2.send(true, "🍡AMA🍡AMA🍡2", "netASCII");
+        		
+        		c.send(false, "A miserible pile of secrets1", "netAscii");
+        		c2.send(false, "A miserible pile of secrets2", "netAscii");
+        		
+        		c.send(true, "Germany1", "NetAscii");
+        		c2.send(true, "Germany2", "NetAscii");
+        		
+        		c.send(false, "irreg1672.jpg1", "oCtEt");
+        		c2.send(false, "irreg1672.jpg2", "oCtEt");
+        		
+        		c.send(true, "darths1602.jpg1", "OcTeT");
+        		c2.send(true, "darths1602.jpg2", "OcTeT");
+        		
+        		c.send(false, "Windows.iso1", "Netascii");
+        		c2.send(false, "Windows.iso2", "Netascii");
+        		
+        		c.send(true, "d3d9.dll1", "netASCII");
+        		c2.send(true, "d3d9.dll2", "netASCII");
+        		/*c.send(true, "This file name is almost certainly, perhaps with over 99% percent odds,"
         				+ "far too long to be accepted by the server,"
         				+ "because it will randomly be truncated part way through", "netASCII");
         		*/

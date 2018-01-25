@@ -22,7 +22,7 @@ public class ErrorSimulatorThread implements Runnable{
 	
 	
 	
-	public ErrorSimulatorThread(DatagramPacket receivePacket, int sourcePort, String destinationIP, int destinationPort) {
+	public ErrorSimulatorThread(DatagramPacket receivePacket, String destinationIP, int destinationPort) {
 	
 		try {
 			sendReceiveSocket = new DatagramSocket();
@@ -39,7 +39,7 @@ public class ErrorSimulatorThread implements Runnable{
 		clientAddress = receivePacket.getAddress();
 		this.receivePacket = receivePacket;
 		this.receiveData = receivePacket.getData();
-		clientPort = sourcePort;
+		clientPort = receivePacket.getPort();
 		serverPort = destinationPort;
 		
 	}

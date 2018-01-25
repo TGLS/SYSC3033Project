@@ -16,7 +16,6 @@ public class Server {
 		// Create a DatagramSocket for reception with the port number you were given.
 		// Surrounded with try-catch because creating a new socket might fail.
 		try {
-			System.out.println("Server: Waiting for Packet");
 			receiveSocket = new DatagramSocket(sourcePort);
 		} catch (SocketException e) {
 			// Print a stack trace and exit.
@@ -32,6 +31,7 @@ public class Server {
 			
 			//once the request is received create a connection thread
 			//this will deal with the validation and file transfer 
+			System.out.println("Server: Creating a client thread");
 			Thread returnThread = new Thread(new ClientConnectionThread(receivePacket),"returnThread");
 			returnThread.start();
 		}

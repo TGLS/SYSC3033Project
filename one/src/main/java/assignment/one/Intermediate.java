@@ -24,7 +24,6 @@ public class Intermediate {
 		// Create a DatagramSocket for reception with the port number you were given.
 		// Surrounded with try-catch because creating a new socket might fail.
 		try {
-			System.out.println("Intermediate: Waiting for Packet");
 			receiveSocket = new DatagramSocket(sourcePort);
 		} catch (SocketException e) {
 			// Print a stack trace and exit.
@@ -70,7 +69,8 @@ public class Intermediate {
 	private void createThread() {
 		//This function creates a thread to deal with the interaction 
 		//between the client and server
-		Thread errorSimThread = new Thread(new ErrorSimulatorThread(receivePacket,sourcePort,destinationIP,destinationPort),"errorSimThread");
+		System.out.println("Intermediate: Creating an error sim thread");
+		Thread errorSimThread = new Thread(new ErrorSimulatorThread(receivePacket,destinationIP,destinationPort),"errorSimThread");
 		errorSimThread.start();
 	}
 	
