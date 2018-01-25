@@ -20,22 +20,26 @@ public class App
     	
     	try {
     		if (input.equals("server")) {
-        		new Server();
+        	
+           		System.out.println("Which recieve port would you like to use?");
+        		int sourcePort = s.nextInt();
+        		new Server(sourcePort);
+        		
         	
         	} else if (input.equals("intermediate")) {
-        		System.out.println("Which source port would you like to use?");
-        		String sourcePort = s.nextLine();
-        		System.out.println("Which destination port would you like to use?");
-        		String destinationPort = s.nextLine();
         		System.out.println("Specify the ip address of the server.");
-        		String destinationIP = s.nextLine();
-        		new Intermediate(sourcePort, destinationIP, destinationPort);
-        	} else if (input.equals("client")) {
+        		String serverDestinationIP = s.nextLine();
+        		System.out.println("Which source port would you like to use?");
+        		int sourcePort = s.nextInt();
         		System.out.println("Which destination port would you like to use?");
-        		String destinationPort = s.nextLine();
+        		int destinationPort = s.nextInt();
+        		new Intermediate(sourcePort, serverDestinationIP, destinationPort).loop();
+        	} else if (input.equals("client")) {
         		System.out.println("Specify the ip address of the intermediate.");
         		String destinationIP = s.nextLine();
-        		new Client(destinationIP, destinationPort);
+        		System.out.println("Which destination port would you like to use?");
+        		int destinationPort = s.nextInt();
+        		Client c = new Client(destinationIP, destinationPort);
      
         		c.send(false, "Thompson", "Octet");
         		c.send(true, "sKLFasjflksajf", "ocTET"); 
@@ -47,10 +51,10 @@ public class App
         		c.send(true, "darths1602.jpg", "OcTeT");
         		c.send(false, "Windows.iso", "Netascii");
         		c.send(true, "d3d9.dll", "netASCII");
-        		c.send(true, "This file name is almost certainly, perhaps with over 99% percent odds,"
+        		/*c.send(true, "This file name is almost certainly, perhaps with over 99% percent odds,"
         				+ "far too long to be accepted by the server,"
         				+ "because it will randomly be truncated part way through", "netASCII");
-        		
+        		*/
         	} else {
         		// If we get here, we have a bad argument.
         		incorrectArgumentMessage();

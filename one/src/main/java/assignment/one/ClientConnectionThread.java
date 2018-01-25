@@ -31,6 +31,12 @@ public class ClientConnectionThread implements Runnable {
 		}
 		formResponse();
 		printResponse();
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		sendResponse();
 		
 	}
@@ -127,8 +133,6 @@ public class ClientConnectionThread implements Runnable {
 		// Print the checksum
 		System.out.println("");
 		System.out.println("Checksum: " + String.format("%08X", checksum));
-		System.out.println("THIS IS THE SERVER");
-
 	}
 	
 	private void printResponse() {
@@ -140,7 +144,6 @@ public class ClientConnectionThread implements Runnable {
 		System.out.print(String.format("%02X", sendData[1]));
 		System.out.print(String.format("%02X", sendData[2]));
 		System.out.println(String.format("%02X", sendData[3]));
-		System.out.println("THIS IS THE SERVER");
 	}
 
 	private synchronized void sendResponse() {

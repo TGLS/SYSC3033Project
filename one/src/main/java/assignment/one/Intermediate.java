@@ -22,10 +22,10 @@ public class Intermediate {
 	
 	private final static int max_buffer = 120;
 	
-	public Intermediate(int sourcePort, int destinationPort) {
+	public Intermediate(int sourcePort, String destinationIP, int destinationPort) {
 		this.serverPort = destinationPort;
 		try {
-			serverAddress = InetAddress.getLocalHost();
+			serverAddress = InetAddress.getByName(destinationIP);
 			sendReceiveSocket = new DatagramSocket();
 		} catch (UnknownHostException e) {
 			// Print a stack trace and exit.
@@ -40,6 +40,7 @@ public class Intermediate {
 		// Create a DatagramSocket for reception with the port number you were given.
 		// Surrounded with try-catch because creating a new socket might fail.
 		try {
+			System.out.println("Intermediate: Waiting for Packet");
 			receiveSocket = new DatagramSocket(sourcePort);
 		} catch (SocketException e) {
 			// Print a stack trace and exit.

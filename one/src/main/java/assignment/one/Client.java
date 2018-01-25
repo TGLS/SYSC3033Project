@@ -16,10 +16,10 @@ public class Client {
 	
 	private final static int max_buffer = 120;
 
-	public Client(int destinationPort) {
+	public Client(String destinationIP, int destinationPort) {
 		this.destinationPort = destinationPort;
 		try {
-			destinationAddress = InetAddress.getLocalHost();
+			destinationAddress = InetAddress.getByName(destinationIP);
 			sendReceiveSocket = new DatagramSocket();
 		} catch (UnknownHostException e) {
 			// Print a stack trace and exit.

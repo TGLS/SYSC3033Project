@@ -12,11 +12,12 @@ public class Server {
 	
 	private final static int max_buffer = 120;
 
-	public Server() {
+	public Server(int sourcePort) {
 		// Create a DatagramSocket for reception with the port number you were given.
 		// Surrounded with try-catch because creating a new socket might fail.
 		try {
-			receiveSocket = new DatagramSocket(69);
+			System.out.println("Server: Waiting for Packet");
+			receiveSocket = new DatagramSocket(sourcePort);
 		} catch (SocketException e) {
 			// Print a stack trace and exit.
 			e.printStackTrace();
