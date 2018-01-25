@@ -6,7 +6,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
-public class ClientConnectionThread implements Runnable {
+public class ServerResponseThread implements Runnable {
 	private DatagramSocket sendSocket;
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
@@ -18,7 +18,7 @@ public class ClientConnectionThread implements Runnable {
 	private final static int max_buffer = 120;
 
 	
-	public ClientConnectionThread(DatagramPacket receivePacket) {
+	public ServerResponseThread(DatagramPacket receivePacket) {
 		this.receivePacket = receivePacket;
 		this.receiveData = receivePacket.getData();
 	}
