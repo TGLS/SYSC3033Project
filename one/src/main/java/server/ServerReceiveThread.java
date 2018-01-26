@@ -4,12 +4,16 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
+//import java.util.logging.Logger;
 
 
 public class ServerReceiveThread implements Runnable{
 	private DatagramSocket receiveSocket;
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
+	private ArrayList<Thread> activeThreads;
+	//private static Logger logger; 
 	
 	private final static int max_buffer = 120;
 	
@@ -18,23 +22,27 @@ public class ServerReceiveThread implements Runnable{
 		// Surrounded with try-catch because creating a new socket might fail.
 		try {
 			receiveSocket = new DatagramSocket(sourcePort);
+			receiveSocket.setSoTimeout(1000);
 		} catch (SocketException e) {
-		// Print a stack trace and exit.
-		e.printStackTrace();
-		System.exit(1);
+			// Print a stack trace and exit.
+			e.printStackTrace();
+			System.exit(1);
 		}
+		//Initialize a list to keep track of all the active threads 		
+		activeThreads = new ArrayList<Thread>();
+		
 	}
 	
 	public void run() {
 		
-		
-		while(true) {
-			 //Wait to receive a request from the client 
+		//run until we get the shutdown message
+		while(!ServerControl.serverStop) {
+			 //Wait to receive a request from the client. 
 			receiveRequest();
-			//Create a thread to deal with the request
-			createThread();	
-	
 		}
+		
+		//Shutdown after the signal is received; 
+		shutdown();
 		
 	}
 	
@@ -52,20 +60,36 @@ public class ServerReceiveThread implements Runnable{
 		// Surrounded with try-catch because receiving a message might fail.
 		try {
 			receiveSocket.receive(receivePacket);
+			
+			//Create a thread to deal with the received request.
+			createThread();	
+			
 		} catch (IOException e) {
-			// Print a stack trace, close the socket, and exit.
-			e.printStackTrace();
-			receiveSocket.close();
-			System.exit(1);
+		
+			// This should be non blocking we want the receive to reset so that we
+			// can properly shutdown the server 
+			
 		}
 	}
 	
 	private void createThread() {
 		//This function creates and runs a thread to respond to the Client 
-		
-		Thread repsonseThread = new Thread(new ServerResponseThread(receivePacket),"repsonseThread");
-		repsonseThread.start();
+		Thread responseThread = new Thread(new ServerResponseThread(receivePacket),"repsonseThread");
+		responseThread.start();
+		activeThreads.add(responseThread);
 	}
 	
-
+	private void shutdown() {
+		// To properly shutdown the threads
+		
+		for(Thread curThread: activeThreads) {
+		// wait for all thread to finish, then exit 
+			try {
+				curThread.join();
+			} catch (InterruptedException e) {
+				System.out.println("There was an error shutting down the threads");
+				e.printStackTrace();
+			}		
+		}
+	}
 }
