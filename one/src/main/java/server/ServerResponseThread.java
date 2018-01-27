@@ -31,12 +31,6 @@ public class ServerResponseThread implements Runnable {
 		}
 		formResponse();
 		printResponse();
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		sendResponse();
 		
 	}
@@ -181,7 +175,7 @@ public class ServerResponseThread implements Runnable {
 		
 		// Allow for other ClientConnectionThreads to compete for the socket
 		portAvailable = true;
-		notify();
+		notifyAll();
 	}
 	
 	private boolean validateRequest() {
