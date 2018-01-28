@@ -1,6 +1,8 @@
 package client;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.ArrayList;
@@ -13,10 +15,11 @@ public class Client {
 	private byte[] sendData;
 	private InetAddress destinationAddress;
 	private int destinationPort;
+	private boolean verbose;
 	
 	private final static int max_buffer = 120;
 
-	public Client(String destinationIP, int destinationPort) {
+	public Client(String destinationIP, int destinationPort, boolean verbose) {
 		this.destinationPort = destinationPort;
 		try {
 			destinationAddress = InetAddress.getByName(destinationIP);
@@ -32,12 +35,40 @@ public class Client {
 		}
 	}
 	
+	public void loop() {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		while (true) {
+	        try {
+	        	System.out.print("Enter file name: ");
+				String fileName = br.readLine();
+				System.out.print("Enter request type (read, write): ");
+				String requestType = br.readLine();
+				if (requestType.equals("read")) {
+					send(true, fileName, "octet");
+				} else if (requestType.equals("write")) {
+					send(true, fileName, "octet");
+				} else {
+					System.out.println("Invalid request type.");
+				}
+			} catch (IOException e) {
+				// Output an error and repeat.
+				System.out.println("Input Error!");
+			}
+		}
+	}
+	
 	public void send(boolean read, String fileName, String mode) {
 		formRequest(read, fileName, mode);
-		printRequest();
+		// No printing if it isn't verbose.
+		if (verbose) {
+			printRequest();
+		}
 		sendRequest();
 		receiveResponse();
-		printResponse();
+		// No printing if it isn't verbose.
+		if (verbose) {
+			printResponse();
+		}
 	}
 	
 	private void receiveResponse() {
@@ -77,7 +108,9 @@ public class Client {
 		// Here, we're going to create a new socket (the notional sendSocket)
 		// Send the response packet, and then close the socket.
 		try {
-			System.out.println("Trying to send a packet");
+			if (verbose) {
+				System.out.println("Trying to send a packet");
+			}
 			sendReceiveSocket.send(sendPacket);
 		} catch (IOException e) {
 			e.printStackTrace();

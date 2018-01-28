@@ -43,9 +43,9 @@ public class App2
         		String destinationIP = s.nextLine();
         		System.out.println("Which destination port would you like to use?");
         		int destinationPort = s.nextInt();
-        		Client c = new Client(destinationIP, destinationPort);
+        		Client c = new Client(destinationIP, destinationPort, true);
         		
-        		Client c2 = new Client(destinationIP, destinationPort);
+        		Client c2 = new Client(destinationIP, destinationPort, true);
         		
         		
         		
