@@ -34,7 +34,6 @@ public class App
         	
         	} else if (args[0].equals("intermediate")) {
         		Intermediate i = new Intermediate(Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]));
-        		i.loop();
         	} else if (args[0].equals("client")) {
         		Client c = new Client(args[1], Integer.parseInt(args[2]), verbose);
         		c.loop();

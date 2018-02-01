@@ -57,7 +57,7 @@ public class Server {
 				
 			//if verbose is entered, signal verbose mode.
 			}else if(commandIn.equals(verbose)) {
-				ServerControl.verboseMode = false;
+				ServerControl.verboseMode = true;
 				
 			//Not a valid Command  
 			}else {

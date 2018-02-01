@@ -6,6 +6,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 import apps.App;
@@ -20,13 +21,16 @@ public class ErrorSimulatorThread implements Runnable{
 	private int serverPort;
 	private InetAddress clientAddress;
 	private int clientPort;
-	
+	private final static int max_buffer = 120;
+	private boolean firstContact = true; 
+	boolean transfering = true;
 	
 	
 	public ErrorSimulatorThread(DatagramPacket receivePacket, String destinationIP, int destinationPort) {
 	
 		try {
 			sendReceiveSocket = new DatagramSocket();
+			sendReceiveSocket.setSoTimeout(1000);
 			serverAddress = InetAddress.getByName(destinationIP);
 		} catch (SocketException e) {
 		// Print a stack trace and exit.
@@ -46,15 +50,34 @@ public class ErrorSimulatorThread implements Runnable{
 	}
 	
 	public void run() {
-		printRequest();
-		formRequest();
-		reprintRequest();
-		sendRequest();
-		receiveResponse();
-		printResponse();
-		formResponse();
-		reprintResponse();
-		sendResponse();
+		
+		while(transfering) {
+			if(IntermediateControl.verboseMode) {
+				printRequest();
+			}
+			formRequest();
+			
+			if(IntermediateControl.verboseMode) {
+			//	reprintRequest();
+			}
+			sendRequest();
+			receiveResponse();
+			if(IntermediateControl.verboseMode) {
+				printResponse();
+			}
+			formResponse();
+			if(IntermediateControl.verboseMode) {
+			//	reprintResponse();
+			}
+			sendResponse();
+			
+			receiveRequest();
+		}
+		
+		sendReceiveSocket.close();
+		
+		
+		
 		
 	}
 
@@ -74,6 +97,7 @@ public class ErrorSimulatorThread implements Runnable{
 				System.out.println("Write Request");
 			} else {
 				System.out.println("Invalid Request1111");
+				System.exit(1);
 			}
 			
 			// Next, we copy the byte array after the first two bytes
@@ -238,12 +262,24 @@ public class ErrorSimulatorThread implements Runnable{
 		// Surrounded with try-catch because receiving a message might fail.
 		try {
 			sendReceiveSocket.receive(receivePacket);
+		}catch (SocketTimeoutException e) {
+			// non blocking so that we can recieve shutdown
+			
+			//want to shutdown if we get here
+			transfering =false;
+			
 		} catch (IOException e) {
 			// Print a stack trace, close the socket, and exit.
 			e.printStackTrace();
 			sendReceiveSocket.close();
 			System.exit(1);
 		}
+		if(firstContact) {
+			serverAddress = receivePacket.getAddress();
+			serverPort = receivePacket.getPort();
+			firstContact = false;
+		}
+		
 	}
 	
 	
@@ -286,6 +322,7 @@ public class ErrorSimulatorThread implements Runnable{
 		// If I were not bound by the specification, I'd create a new socket,
 		// like the server does, so a rogue client couldn't attempt to disrupt
 		// intermediate/server operations.
+		
 		try {
 			sendReceiveSocket.send(sendPacket);
 		} catch (IOException e) {
@@ -295,4 +332,56 @@ public class ErrorSimulatorThread implements Runnable{
 			System.exit(1);
 		}
 	}
+
+	private void receiveRequest() {
+		// In this function, we create a new packet to store and incoming request,
+		// and store the incoming request. We also retreive the port and ip of the requester.
+		
+		// Create a byte array for the incoming packet.
+		receiveData = new byte[max_buffer];
+		
+		// Create a packet for the incoming packet.
+		receivePacket = new DatagramPacket(receiveData, receiveData.length);
+		
+		// Receive a message from the reception socket.
+		// Surrounded with try-catch because receiving a message might fail.
+		try {
+			sendReceiveSocket.receive(receivePacket);
+			
+			//if recieved create a thread 	
+			
+		}catch (SocketTimeoutException e) {
+			// non blocking so that we can recieve shutdown
+			
+			//want to shutdown if we get here
+			transfering =false;
+			
+		}catch(IOException ste) {
+			ste.printStackTrace();
+			sendReceiveSocket.close();
+			System.exit(1);
+			
+		}
+		
+		
+	}
+	
+	
+private void shutdown() {
+		
+		//close the scanner 
+		
+		
+		
+		
+		//Notify the user of the completion
+		System.out.println("All the threads have completed goodbye ... ");
+		
+		
+		//terminate the program
+		System.exit(0);
+		
+	}
+	
+	
 }
