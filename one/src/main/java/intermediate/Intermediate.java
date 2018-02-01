@@ -1,34 +1,21 @@
 package intermediate;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
 import java.util.Scanner;
 
-import server.ServerControl;
-import server.ServerReceiveThread;
-
-import apps.App;
 
 public class Intermediate {
-	private int destinationPort;
-	private String destinationIP;
 	private Scanner s ;
 	private Thread errorSimRecieveThread;
 	private String shutDown = "shutdown"; 
 	private String verbose = "verbose";
 	
 	
-	public Intermediate(int sourcePort, String destinationIP, int destinationPort) {
-		this.destinationIP = destinationIP;
-		this.destinationPort = destinationPort;
-		
+	public Intermediate(int sourcePort, String destinationIP, int destinationPort, boolean verbose) {
 		// Create a DatagramSocket for reception with the port number you were given.
 		// Surrounded with try-catch because creating a new socket might fail.
 		
 		IntermediateControl.IntermediateStop = false;
-		IntermediateControl.verboseMode = false;
+		IntermediateControl.verboseMode = verbose;
 		
 		//First start the server receive thread  
 		errorSimRecieveThread = new Thread(new ErrorSimRecieveThread(sourcePort,destinationIP,destinationPort),"ErrorSimRecieveThread");
@@ -70,6 +57,10 @@ public class Intermediate {
 			//if verbose is entered, signal verbose mode.
 			}else if(commandIn.equals(verbose)) {
 				IntermediateControl.verboseMode = true;
+				
+			//if quiet is entered, exit verbose mode.
+			}else if(commandIn.equals("quiet")) {
+				IntermediateControl.verboseMode = false;
 				
 			//Not a valid Command  
 			}else {

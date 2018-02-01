@@ -58,7 +58,7 @@ public class ErrorSimulatorThread implements Runnable{
 			formRequest();
 			
 			if(IntermediateControl.verboseMode) {
-			//	reprintRequest();
+				reprintRequest();
 			}
 			sendRequest();
 			receiveResponse();
@@ -67,7 +67,7 @@ public class ErrorSimulatorThread implements Runnable{
 			}
 			formResponse();
 			if(IntermediateControl.verboseMode) {
-			//	reprintResponse();
+				reprintResponse();
 			}
 			sendResponse();
 			
@@ -96,7 +96,7 @@ public class ErrorSimulatorThread implements Runnable{
 			} else if (receiveData[1] == 2) {
 				System.out.println("Write Request");
 			} else {
-				System.out.println("Invalid Request1111");
+				System.out.println("Invalid Request");
 				System.exit(1);
 			}
 			
@@ -348,7 +348,7 @@ public class ErrorSimulatorThread implements Runnable{
 		try {
 			sendReceiveSocket.receive(receivePacket);
 			
-			//if recieved create a thread 	
+			//if received create a thread 	
 			
 		}catch (SocketTimeoutException e) {
 			// non blocking so that we can recieve shutdown
@@ -364,24 +364,5 @@ public class ErrorSimulatorThread implements Runnable{
 		}
 		
 		
-	}
-	
-	
-private void shutdown() {
-		
-		//close the scanner 
-		
-		
-		
-		
-		//Notify the user of the completion
-		System.out.println("All the threads have completed goodbye ... ");
-		
-		
-		//terminate the program
-		System.exit(0);
-		
-	}
-	
-	
+	}	
 }

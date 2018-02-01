@@ -15,13 +15,13 @@ public class Server {
 	private Thread recieveThread;
 	private Scanner s ;
 	
-	public Server(int sourcePort) {
+	public Server(int sourcePort, boolean verbose) {
 		// This method will start the server receive thread and then proceed to 
 		// Run the Server CLI: 
 		
 		//Initialize the control settings
 		ServerControl.serverStop = false;
-		ServerControl.verboseMode = false;
+		ServerControl.verboseMode = verbose;
 		
 		//First start the server receive thread  
 		recieveThread = new Thread(new ServerReceiveThread(sourcePort),"recieveThread");
@@ -58,6 +58,10 @@ public class Server {
 			//if verbose is entered, signal verbose mode.
 			}else if(commandIn.equals(verbose)) {
 				ServerControl.verboseMode = true;
+			
+			//if quiet is entered, exit verbose mode
+			}else if(commandIn.equals("quiet")) {
+				ServerControl.verboseMode = false;
 				
 			//Not a valid Command  
 			}else {

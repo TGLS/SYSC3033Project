@@ -20,6 +20,7 @@ public class Client {
 	private boolean verbose;
 
 	public Client(String destinationIP, int destinationPort, boolean verbose) {
+		this.verbose = verbose;
 		this.destinationPort = destinationPort;
 		try {
 			destinationAddress = InetAddress.getByName(destinationIP);
@@ -39,21 +40,37 @@ public class Client {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		while (true) {
 			try {
-				System.out.print("Enter file name: ");
-				String fileName = br.readLine();
-				System.out.print("Enter request type (read, write): ");
-				String requestType = br.readLine();
-				if (requestType.equals("read")) {
-					send(true, fileName, "octet");
-				} else if (requestType.equals("write")) {
-					send(true, fileName, "octet");
-				} else {
-					System.out.println("Invalid request type.");
-				}
+				System.out.print("Enter command: ");
+				interpretCommand(br.readLine());
+				
 			} catch (IOException e) {
 				// Output an error and repeat.
 				System.out.println("Input Error!");
 			}
+		}
+	}
+	
+	public void interpretCommand(String command) {
+		try {
+			if (command.split(" ")[0].equals("read")) {
+				send(true, command.split(" ")[1], "octet");
+			} else if (command.split(" ")[0].equals("write")) {
+				send(false, command.split(" ")[1], "octet");
+			} else if (command.equals("quiet")) {
+				verbose = false;
+			} else if (command.equals("verbose")) {
+				verbose = true;
+			} else if (command.equals("help")) {
+				System.out.println("Valid commands are:");
+				System.out.println("verbose");
+				System.out.println("quiet");
+				System.out.println("read [filename]");
+				System.out.println("write [filename]");
+			} else {
+				System.out.println("Invalid command.");
+			}
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.out.println("Invalid command.");
 		}
 	}
 

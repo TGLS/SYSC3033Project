@@ -18,7 +18,10 @@ public class App
     public static void main( String[] args )
     {
     	boolean verbose = false;
-    	//
+    	String outgoingIP = "127.0.0.1";
+    	int incomingPort = -1;
+    	int outgoingPort = -1;
+    	// Incoming Argument Handling
     	for (String s : args) {
     		if ((s.equals("-v")) | (s.equals("-verbose"))) {
     			verbose = true;
@@ -27,15 +30,39 @@ public class App
     		if ((s.equals("-q")) | (s.equals("-quiet"))) {
     			verbose = false;
     		}
+    		
+    		if (s.startsWith("-ip=")) {
+    			outgoingIP = s.split("=")[1];
+    		}
+    		
+    		if (s.startsWith("-out_port=")) {
+    			outgoingPort = Integer.parseInt(s.split("=")[1]);
+    		}
+    		
+    		if (s.startsWith("-in_port=")) {
+    			incomingPort = Integer.parseInt(s.split("=")[1]);
+    		}
     	}
     	try {
     		if (args[0].equals("server")) {
-        		Server s = new Server(Integer.parseInt(args[1]));
+    			if (incomingPort == -1) {
+    				incomingPort = 69;
+    			}
+        		Server s = new Server(incomingPort, verbose);
         	
         	} else if (args[0].equals("intermediate")) {
-        		Intermediate i = new Intermediate(Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]));
+        		if (incomingPort == -1) {
+    				incomingPort = 23;
+    			}
+        		if (outgoingPort == -1) {
+        			outgoingPort = 69;
+    			}
+        		Intermediate i = new Intermediate(incomingPort, outgoingIP, outgoingPort, verbose);
         	} else if (args[0].equals("client")) {
-        		Client c = new Client(args[1], Integer.parseInt(args[2]), verbose);
+        		if (outgoingPort == -1) {
+        			outgoingPort = 23;
+    			}
+        		Client c = new Client(outgoingIP, outgoingPort, verbose);
         		c.loop();
         		
         	} else {
@@ -48,15 +75,16 @@ public class App
     }
     
     private static void incorrectArgumentMessage() {
-    	System.out.println("You must provide arguments of one of the following forms:");
-    	System.out.println("server [source port]");
-    	System.out.println("client [destination ip] [destination port]");
-    	System.out.println("intermediate [source port] [destination ip] [destination port]");
-    	System.out.println("[Note that the destination ip and port must be the ip");
-    	System.out.println("and port of a server or intermediate process.]");
+    	System.out.println("You must an argument of one of the following forms:");
+    	System.out.println("server");
+    	System.out.println("client");
+    	System.out.println("intermediate");
     	System.out.println("You may provide any number of the following options afterwards:");
     	System.out.println(" -v, -verbose: Enables verbose output.");
     	System.out.println(" -q, -quiet: Disables verbose output (default).");
+    	System.out.println(" -in_port=[port]: Sets the port incoming messages will be received by. Default for server is 69, for intermeditate is 23.");
+    	System.out.println(" -out_port=[port]: Sets the port outgoing messages will be sent to. Default for client is 23, for intermeditate is 69.");
+    	System.out.println(" -ip=[ip]: Sets the ip outgoing messages will be sent to. Default for client and intermediate is 127.0.0.1.");
     	System.out.println("Later options are take precedence over earlier options.");
     }
 }
