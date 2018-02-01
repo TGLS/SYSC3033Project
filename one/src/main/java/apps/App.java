@@ -11,6 +11,10 @@ import server.Server;
  */
 public class App 
 {
+	// To coordinate the size of the data buffer used by each component of the system,
+	// We're moving the max_buffer constant here.
+	public final static int max_buffer = 516;
+	
     public static void main( String[] args )
     {
     	boolean verbose = false;

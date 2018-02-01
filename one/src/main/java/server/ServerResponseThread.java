@@ -6,6 +6,14 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+import apps.App;
+
+/**
+ * This class has two functions:
+ * 1) Respond to the first message
+ * 2) Handle steady state communications.
+ */
+
 public class ServerResponseThread implements Runnable {
 	private DatagramSocket sendSocket;
 	private DatagramPacket receivePacket;
@@ -14,8 +22,6 @@ public class ServerResponseThread implements Runnable {
 	private byte[] sendData;
 	
 	boolean portAvailable = true;
-	
-	private final static int max_buffer = 120;
 
 	
 	public ServerResponseThread(DatagramPacket receivePacket) {
@@ -120,7 +126,7 @@ public class ServerResponseThread implements Runnable {
 			// Because we validate data after we print the data,
 			// we'll check if we're over the max_buffer limit here,
 			// to avoid going over array index limitations.
-			if (n >= max_buffer) {
+			if (n >= App.max_buffer) {
 				break;
 			}
 		}
@@ -189,7 +195,7 @@ public class ServerResponseThread implements Runnable {
 		int cell = 2;
 		
 		// If the length is over max_buffer bytes, the message is too long.
-		if (receivePacket.getLength() > max_buffer) {
+		if (receivePacket.getLength() > App.max_buffer) {
 			return false;
 		}
 		

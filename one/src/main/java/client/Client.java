@@ -7,6 +7,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.ArrayList;
 
+import apps.App;
+
 public class Client {
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
@@ -16,8 +18,6 @@ public class Client {
 	private InetAddress destinationAddress;
 	private int destinationPort;
 	private boolean verbose;
-	
-	private final static int max_buffer = 120;
 
 	public Client(String destinationIP, int destinationPort, boolean verbose) {
 		this.destinationPort = destinationPort;
@@ -34,12 +34,12 @@ public class Client {
 			System.exit(1);
 		}
 	}
-	
+
 	public void loop() {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		while (true) {
-	        try {
-	        	System.out.print("Enter file name: ");
+			try {
+				System.out.print("Enter file name: ");
 				String fileName = br.readLine();
 				System.out.print("Enter request type (read, write): ");
 				String requestType = br.readLine();
@@ -56,7 +56,7 @@ public class Client {
 			}
 		}
 	}
-	
+
 	public void send(boolean read, String fileName, String mode) {
 		formRequest(read, fileName, mode);
 		// No printing if it isn't verbose.
@@ -70,17 +70,18 @@ public class Client {
 			printResponse();
 		}
 	}
-	
+
 	private void receiveResponse() {
-		// In this function, we create a new packet to store and incoming response,
+		// In this function, we create a new packet to store and incoming
+		// response,
 		// and store the incoming response.
-		
+
 		// Create a byte array for the incoming packet.
 		receiveData = new byte[4];
-		
+
 		// Create a packet for the incoming packet.
 		receivePacket = new DatagramPacket(receiveData, receiveData.length);
-		
+
 		// Receive a message from the reception socket.
 		// Surrounded with try-catch because receiving a message might fail.
 		try {
@@ -95,7 +96,8 @@ public class Client {
 
 	private void printResponse() {
 		// This one's simple.
-		// We're going to print out the hex values of the four bytes in receiveData.
+		// We're going to print out the hex values of the four bytes in
+		// receiveData.
 		// No check sum here. It wouldn't be meaningful anyway.
 		System.out.println("Response: ");
 		System.out.print(String.format("%02X", receiveData[0]));
@@ -103,7 +105,7 @@ public class Client {
 		System.out.print(String.format("%02X", receiveData[2]));
 		System.out.println(String.format("%02X", receiveData[3]));
 	}
-	
+
 	private void sendRequest() {
 		// Here, we're going to create a new socket (the notional sendSocket)
 		// Send the response packet, and then close the socket.
@@ -118,17 +120,17 @@ public class Client {
 			System.exit(1);
 		}
 	}
-	
+
 	private void formRequest(boolean read, String fileName, String mode) {
 		// To create the request, we create an arrayList of bytes,
 		// then add all the bytes to it. Then we convert it to a regular array,
 		// then build a packet.
 		ArrayList<Byte> buffer = new ArrayList<Byte>();
 		byte[] stringBuffer;
-		
+
 		// All requests begin with a 0.
 		buffer.add((byte) 0);
-		
+
 		// If the request is a read, the next byte's a 1,
 		// otherwise it's a write, so the next byte's a 2
 		if (read) {
@@ -136,27 +138,28 @@ public class Client {
 		} else {
 			buffer.add((byte) 2);
 		}
-		
+
 		// Next we add the filename.
 		stringBuffer = fileName.getBytes();
 		for (byte b : stringBuffer) {
 			buffer.add(b);
 		}
-		
+
 		// Now we need a zero
 		buffer.add((byte) 0);
-		
+
 		// Next we add the mode.
 		stringBuffer = mode.getBytes();
 		for (byte b : stringBuffer) {
 			buffer.add(b);
 		}
-		
+
 		// And the final zero
 		buffer.add((byte) 0);
-		
+
 		// Now we make an array
-		// We make an array of the same size as the buffer, and then we copy the old bytes over.
+		// We make an array of the same size as the buffer, and then we copy the
+		// old bytes over.
 		// n is used to keep track of the index.
 		sendData = new byte[buffer.size()];
 		int n = 0;
@@ -164,15 +167,13 @@ public class Client {
 			sendData[n] = b;
 			n++;
 		}
-		
-		
+
 		// And now we build the packet
-		sendPacket = new DatagramPacket(sendData, sendData.length, destinationAddress,
-				destinationPort);
+		sendPacket = new DatagramPacket(sendData, sendData.length, destinationAddress, destinationPort);
 	}
 
 	private void printRequest() {
-		//Checksum is the sum of all the bytes, less overflows
+		// Checksum is the sum of all the bytes, less overflows
 		int checksum = 0;
 		// First we convert the sent data into strings.
 		// While we're doing this, we'll check array index bounds by try-catch.
@@ -187,34 +188,35 @@ public class Client {
 			} else {
 				System.out.println("Invalid Request");
 			}
-			
+
 			// Next, we copy the byte array after the first two bytes
-			byte[] buffer = new byte[sendPacket.getLength()]; 
+			byte[] buffer = new byte[sendPacket.getLength()];
 			for (int n = 2; n < sendPacket.getLength(); n++) {
 				buffer[n - 2] = sendData[n];
 			}
-			
-			// Now we convert the byte array to text, and split at null characters
+
+			// Now we convert the byte array to text, and split at null
+			// characters
 			String rawText = new String(buffer, "UTF-8");
 			String[] text = rawText.split("\u0000");
-			
+
 			// Then we print the file name and mode, with labels
 			System.out.println("File Name: " + text[0]);
 			System.out.println("Mode: " + text[1]);
-			
-		}  catch (ArrayIndexOutOfBoundsException e) {
+
+		} catch (ArrayIndexOutOfBoundsException e) {
 			// If we get an array exception, the request is probably
 			// has a blank file name somewhere, or is an invalid request.
 			// We'll just make a note.
 			System.out.println("Error reading request.");
-    	} catch (UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException e) {
 			// If we have an unsupported character, we'll just make a note.
-    		// This doesn't necessarily mean the request is invalid.
-    		System.out.println("Cannot render filename or buffer.");
+			// This doesn't necessarily mean the request is invalid.
+			System.out.println("Cannot render filename or buffer.");
 		}
-		
+
 		System.out.println("");
-		
+
 		// Then we print it as hex and compute a checksum.
 		// This is accomplished by converting each number to hex,
 		// then printing it. Line breaks every 40 numbers.
@@ -229,11 +231,11 @@ public class Client {
 			}
 			// Calculate the checksum while printing each byte
 			checksum += sendData[n];
-			
+
 			// Because we validate data after we print the data,
 			// we'll check if we're over the max_buffer limit here,
 			// to avoid going over array index limitations.
-			if (n >= max_buffer) {
+			if (n >= App.max_buffer) {
 				break;
 			}
 		}

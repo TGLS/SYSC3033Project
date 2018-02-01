@@ -7,6 +7,12 @@ import java.net.SocketException;
 import java.util.ArrayList;
 //import java.util.logging.Logger;
 
+import apps.App;
+
+/**
+ * This class has one function:
+ * Receive incoming messages from the receive socket and create threads to handle them.
+ */
 
 public class ServerReceiveThread implements Runnable{
 	private DatagramSocket receiveSocket;
@@ -14,8 +20,6 @@ public class ServerReceiveThread implements Runnable{
 	private byte[] receiveData;
 	private ArrayList<Thread> activeThreads;
 	//private static Logger logger; 
-	
-	private final static int max_buffer = 120;
 	
 	public ServerReceiveThread(int sourcePort) {
 		// Create a DatagramSocket for reception with the port number you were given.
@@ -51,7 +55,7 @@ public class ServerReceiveThread implements Runnable{
 		// and store the incoming request.
 		
 		// Create a byte array for the incoming packet.
-		receiveData = new byte[max_buffer];
+		receiveData = new byte[App.max_buffer];
 			
 		// Create a packet for the incoming packet.
 		receivePacket = new DatagramPacket(receiveData, receiveData.length);

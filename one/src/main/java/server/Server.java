@@ -2,6 +2,12 @@ package server;
 
 import java.util.Scanner;
 
+/**
+ * This short class has two functions:
+ * 1) Start up the CLI for the Server.
+ * 2) Start the Server Receive Thread. 
+ */
+
 public class Server {
 
 	private String shutDown = "shutdown"; 

@@ -8,6 +8,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import apps.App;
+
 public class ErrorSimulatorThread implements Runnable{
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
@@ -18,7 +20,6 @@ public class ErrorSimulatorThread implements Runnable{
 	private int serverPort;
 	private InetAddress clientAddress;
 	private int clientPort;
-	private final static int max_buffer = 120;
 	
 	
 	
@@ -118,7 +119,7 @@ public class ErrorSimulatorThread implements Runnable{
 			// Because we validate data after we print the data,
 			// we'll check if we're over the max_buffer limit here,
 			// to avoid going over array index limitations.
-			if (n >= max_buffer) {
+			if (n >= App.max_buffer) {
 				break;
 			}
 		}
@@ -200,7 +201,7 @@ public class ErrorSimulatorThread implements Runnable{
 			// Because we validate data after we print the data,
 			// we'll check if we're over the max_buffer limit here,
 			// to avoid going over array index limitations.
-			if (n >= max_buffer) {
+			if (n >= App.max_buffer) {
 				break;
 			}
 		}

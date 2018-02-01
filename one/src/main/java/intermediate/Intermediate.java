@@ -5,12 +5,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+import apps.App;
+
 public class Intermediate {
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
 	private DatagramSocket receiveSocket;
 	
-	private final static int max_buffer = 120;
 	private int destinationPort;
 	private String destinationIP;
 	
@@ -45,7 +46,7 @@ public class Intermediate {
 		// and store the incoming request. We also retreive the port and ip of the requester.
 		
 		// Create a byte array for the incoming packet.
-		receiveData = new byte[max_buffer];
+		receiveData = new byte[App.max_buffer];
 		
 		// Create a packet for the incoming packet.
 		receivePacket = new DatagramPacket(receiveData, receiveData.length);
