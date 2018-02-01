@@ -5,34 +5,49 @@ import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
-public class ServerResponseThread implements Runnable {
-	private DatagramSocket sendSocket;
+public class ServerClientConnectionThread implements Runnable {
+	private DatagramSocket sendRecieveSocket;
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
 	private DatagramPacket sendPacket;
 	private byte[] sendData;
 	
 	boolean portAvailable = true;
-	
+	boolean tranfering =true;
 	private final static int max_buffer = 120;
 
 	
-	public ServerResponseThread(DatagramPacket receivePacket) {
+	public ServerClientConnectionThread(DatagramPacket receivePacket) {
 		this.receivePacket = receivePacket;
 		this.receiveData = receivePacket.getData();
+		try {
+			sendRecieveSocket = new DatagramSocket();
+			sendRecieveSocket.setSoTimeout(1000);
+		} catch (SocketException e) {
+			// Print a stack trace and exit.
+			e.printStackTrace();
+			System.exit(1);		
+		}
 	}
 	
 	public void run() {
-		printRequest();
-		if (!validateRequest()) {
-			System.out.println("Invalid Message!");
-			System.exit(1);
+		while(tranfering) {
+			if(ServerControl.verboseMode) {
+				printRequest();
+			}
+			if (!validateRequest()) {
+				System.out.println("Invalid Message!");
+				System.exit(1);
+			}
+			formResponse();
+			if(ServerControl.verboseMode) {
+				printResponse();
+			}
+			sendResponse();
+			receiveRequest();
 		}
-		formResponse();
-		printResponse();
-		sendResponse();
-		
 	}
 	
 	private void formResponse() {
@@ -147,7 +162,7 @@ public class ServerResponseThread implements Runnable {
 				wait();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				sendSocket.close();
+				sendRecieveSocket.close();
 				System.exit(1);
 			}
 		}
@@ -155,27 +170,54 @@ public class ServerResponseThread implements Runnable {
 		// Here, we're going to create a new socket (the notional sendSocket)
 		// Send the response packet, and then close the socket.
 		try {
-			sendSocket = new DatagramSocket();
-			sendSocket.send(sendPacket);
+			sendRecieveSocket.send(sendPacket);
 		} catch (SocketException e) {
 			// Print a stack trace, close all sockets and exit.
 			e.printStackTrace();
-			sendSocket.close();
+			sendRecieveSocket.close();
 			System.exit(1);
 		} catch (IOException e) {
 			// Print a stack trace, close all sockets and exit.
 			e.printStackTrace();
-			sendSocket.close();
+			sendRecieveSocket.close();
 			System.exit(1);
 		}
 		
 		// I'd have put this in a finally block, but we exit on Exception,
 		// so that won't work.
-		sendSocket.close();
+		//sendRecieveSocket.close();
 		
 		// Allow for other ClientConnectionThreads to compete for the socket
 		portAvailable = true;
 		notifyAll();
+	}
+	private void receiveRequest() {
+		// In this function, we create a new packet to store and incoming request,
+		// and store the incoming request.
+		
+		// Create a byte array for the incoming packet.
+		receiveData = new byte[max_buffer];
+			
+		// Create a packet for the incoming packet.
+		receivePacket = new DatagramPacket(receiveData, receiveData.length);
+			
+		// Receive a message from the reception socket.
+		// Surrounded with try-catch because receiving a message might fail.
+		try {
+			sendRecieveSocket.receive(receivePacket);
+			
+		}catch (SocketTimeoutException e) {
+			// non blocking so that we can recieve shutdown
+			
+			tranfering =false;
+			
+		} catch (IOException e) {
+		
+			e.printStackTrace();
+			sendRecieveSocket.close();
+			System.exit(1);
+			
+		}
 	}
 	
 	private boolean validateRequest() {

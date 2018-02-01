@@ -37,20 +37,27 @@ public class App2
         		int sourcePort = s.nextInt();
         		System.out.println("Which destination port would you like to use?");
         		int destinationPort = s.nextInt();
-        		new Intermediate(sourcePort, serverDestinationIP, destinationPort).loop();
+        		new Intermediate(sourcePort, serverDestinationIP, destinationPort);
         	} else if (input.equals("client")) {
         		System.out.println("Specify the ip address of the intermediate.");
         		String destinationIP = s.nextLine();
         		System.out.println("Which destination port would you like to use?");
         		int destinationPort = s.nextInt();
-        		Client c = new Client(destinationIP, destinationPort);
+        		Client c = new Client(destinationIP, destinationPort,true);
+        		Client c2 = new Client(destinationIP, destinationPort,true);
+        		c.send(false, "Thompson1", "Octet");
+        		c2.send(false, "Thompson2", "Octet");
+        		c.send(true, "sKLFasjflksajf1", "ocTET"); 
+        		c2.send(true, "sKLFasjflksajf2", "ocTET"); 
         		
-        		Client c2 = new Client(destinationIP, destinationPort);
         		
+        		
+        		
+        		/*
         		
         		
         		c.send(false, "Thompson1", "Octet");
-        		c2.send(false, "Thompson2", "Octet");
+        		
         		
         		c.send(true, "sKLFasjflksajf1", "ocTET"); 
         		c2.send(true, "sKLFasjflksajf2", "ocTET"); 
@@ -78,6 +85,7 @@ public class App2
         		
         		c.send(true, "d3d9.dll1", "netASCII");
         		c2.send(true, "d3d9.dll2", "netASCII");
+        		*/
         		/*c.send(true, "This file name is almost certainly, perhaps with over 99% percent odds,"
         				+ "far too long to be accepted by the server,"
         				+ "because it will randomly be truncated part way through", "netASCII");
