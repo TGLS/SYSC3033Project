@@ -34,7 +34,9 @@ public class ServerResponseThread implements Runnable {
 	}
 	
 	public void run() {
-		printRequest();
+		if (ServerControl.verboseMode) {
+			printRequest();
+		}
 		if (!validateRequest() && ServerControl.verboseMode) {
 			System.out.println("Invalid Message!");
 			System.exit(1);
