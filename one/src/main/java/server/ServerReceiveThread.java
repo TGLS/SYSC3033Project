@@ -7,7 +7,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 //import java.util.logging.Logger;
 
-import apps.App;
+import apps.TFTPCommons;
 
 /**
  * This class has one function:
@@ -55,7 +55,7 @@ public class ServerReceiveThread implements Runnable{
 		// and store the incoming request.
 		
 		// Create a byte array for the incoming packet.
-		receiveData = new byte[App.max_buffer];
+		receiveData = new byte[TFTPCommons.max_buffer];
 			
 		// Create a packet for the incoming packet.
 		receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -78,7 +78,7 @@ public class ServerReceiveThread implements Runnable{
 	
 	private void createThread() {
 		//This function creates and runs a thread to respond to the Client 
-		Thread responseThread = new Thread(new ServerClientConnectionThread(receivePacket),"repsonseThread");
+		Thread responseThread = new Thread(new ServerResponseThread(receivePacket),"responseThread");
 		responseThread.start();
 		activeThreads.add(responseThread);
 	}

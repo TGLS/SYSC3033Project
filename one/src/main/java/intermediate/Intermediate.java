@@ -2,6 +2,11 @@ package intermediate;
 
 import java.util.Scanner;
 
+/**
+ * This short class has two functions:
+ * 1) Start up the CLI for the Intermediate.
+ * 2) Start the Intermediate Receive Thread. 
+ */
 
 public class Intermediate {
 	private Scanner s ;

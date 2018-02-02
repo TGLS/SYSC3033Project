@@ -6,6 +6,10 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 
+/**
+ * This class has one function:
+ * Receive incoming messages from the receive socket and create threads to handle them.
+ */
 public class ErrorSimRecieveThread implements Runnable{
 
 	private DatagramPacket receivePacket;

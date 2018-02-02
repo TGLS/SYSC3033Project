@@ -11,11 +11,7 @@ import server.Server;
  */
 public class App 
 {
-	// To coordinate the size of the data buffer used by each component of the system,
-	// We're moving the max_buffer constant here.
-	public final static int max_buffer = 516;
-	
-    public static void main( String[] args )
+	public static void main( String[] args )
     {
     	boolean verbose = false;
     	String outgoingIP = "127.0.0.1";
@@ -75,7 +71,7 @@ public class App
     }
     
     private static void incorrectArgumentMessage() {
-    	System.out.println("You must an argument of one of the following forms:");
+    	System.out.println("You must provide an argument of one of the following forms:");
     	System.out.println("server");
     	System.out.println("client");
     	System.out.println("intermediate");
