@@ -26,7 +26,6 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private boolean firstContact = true; 
 	
-	
 	public ErrorSimulatorThread(DatagramPacket receivePacket, String destinationIP, int destinationPort) {
 	
 		try {
@@ -50,6 +49,7 @@ public class ErrorSimulatorThread implements Runnable{
 	}
 	
 	public void run() {
+		byte[] lastBlock = null;
 		
 		while(true) {
 			if(IntermediateControl.verboseMode) {
@@ -61,6 +61,27 @@ public class ErrorSimulatorThread implements Runnable{
 				reprintRequest();
 			}
 			sendRequest();
+			// If we receive a non-full length packet,
+			if ((receivePacket.getLength() < TFTPCommons.max_buffer) & (receivePacket.getLength() >= 4)) {
+				// And it's a Data packet
+				if ((receiveData[0] == 0) & (receiveData[1] == 3)) {
+					// Set lastBlock properly.
+					lastBlock = new byte[] {receiveData[2], receiveData[3]};
+				}
+			}
+			// If we receive an acknowledge packet
+			if (receivePacket.getLength() ==  4) {
+				if ((receiveData[0] == 0) & (receiveData[1] == 4)) {
+					// And it matches block number with the previous value
+					if (lastBlock != null) {
+						if ((receiveData[2] == lastBlock[0]) & (receiveData[3] == lastBlock[1])) {
+							// Kill the thread.
+							break;
+						}
+					}
+				}
+			}
+			
 			receiveResponse();
 			if(IntermediateControl.verboseMode) {
 				printResponse();
@@ -71,8 +92,30 @@ public class ErrorSimulatorThread implements Runnable{
 			}
 			sendResponse();
 			
+			// If we receive a non-full length packet,
+			if ((receivePacket.getLength() < TFTPCommons.max_buffer) & (receivePacket.getLength() >= 4)) {
+				// And it's a Data packet
+				if ((receiveData[0] == 0) & (receiveData[1] == 3)) {
+					// Set lastBlock properly.
+					lastBlock = new byte[] {receiveData[2], receiveData[3]};
+				}
+			}
+			// If we receive an acknowledge packet
+			if (receivePacket.getLength() ==  4) {
+				if ((receiveData[0] == 0) & (receiveData[1] == 4)) {
+					// And it matches block number with the previous value
+					if (lastBlock != null) {
+						if ((receiveData[2] == lastBlock[0]) & (receiveData[3] == lastBlock[1])) {
+							// Kill the thread.
+							break;
+						}
+					}
+				}
+			}
+			
 			receiveRequest();
 		}
+		sendReceiveSocket.close();
 	}
 
 	

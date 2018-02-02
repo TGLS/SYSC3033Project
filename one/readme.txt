@@ -6,18 +6,29 @@ Contents
 2) Known Issues
 
 1) How to run
-From where you stored the Assignment1.jar, you can start the program by opening a command line interface there, and running the command "java -jar Assignment1.jar [arguments]". On Windows, the process is further simplified by using the batch program "Assignment1.bat", which runs the program running a client, a server, and an intermediate host on the same machine with the ports specified by the specification. Alternatively, you can run it through Eclipse, creating a run configuration for each set of arguments.
+From where you stored the Increment1.jar, you can start the program by opening a command line interface there, and running the command "java -jar Assignment1.jar [arguments]". On Windows, the process is further simplified by using the batch program "Increment1.bat", which runs the program running a server, an intermediate host, and multiple clients on the same machine with the ports specified by the specification. It starts each in verbose mode.
 
-In order to run the whole system, you must run each of the following arguments.
-server [source port]: This starts a server waiting to accept receive and respond to messages from a client or intermediate host. It will wait to receive messages from the port specified.
-client [destination ip] [destination port]: This starts a client that will send messages to the a server or intermediate host at the destination ip at the destination port and wait for a response after each message.
-intermediate [source port] [destination ip] [destination port]: This starts an intermediate host that will wait to receive messages from a client or intermediate host, and will forward them to a server or another intermediate host.
+In order to run the whole system, you must run "Increment1.jar" one time with each of the
+following arguments:
+server
+intermediate
+client
+
+You may provide any number of the following options afterwards:
+-v, -verbose: Enables verbose output.
+-q, -quiet: Disables verbose output (default).
+-in_port=[port]: Sets the port incoming messages will be received by. Default for server is 69, for intermeditate is 23.
+-out_port=[port]: Sets the port outgoing messages will be sent to. Default for client is 23, for intermeditate is 69.
+-ip=[ip]: Sets the ip outgoing messages will be sent to. Default for client and intermediate is 127.0.0.1.
+Later options are take precedence over earlier options.
 
 2) Known Issues
-The client should be started after all intermediate hosts and servers are created. This is because if it is started earlier than that, the client will send a message to a server or intermediate host that has not yet started, and will stall forever.
+The program will not accept read/write requests with no file name or mode, but the client won't send those messages anyway.
 
-The specification was unclear as to whether no file name or mode would treated as a valid file name or mode (no text is some text after all). The program can handle no file name or mode just fine, but it is not tested with this value.
+Writing to the same file on the server from two different clients can cause conflicts.
 
-In the event that the server receives an invalid request, then the server will exit without sending a message to inform the client or intermediates that it has received an invalid request. Thus, they will be waiting forever for a message that will not be received.
+You can read from a file that is being written to, if you read after the write begins.
 
-The system is not designed for use with multiple clients, so trying to connect multiple clients to the same server or intermediate host will have unusual effects.
+Reading a file that doesn't exist server-side will cause a crash, as will writing a file that doesn't exist client-side.
+
+It's impossible to send commands to the system while verbose is outputting data. 
