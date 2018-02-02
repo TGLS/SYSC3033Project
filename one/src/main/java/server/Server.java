@@ -10,8 +10,6 @@ import java.util.Scanner;
 
 public class Server {
 
-	private String shutDown = "shutdown"; 
-	private String verbose = "verbose";
 	private Thread recieveThread;
 	private Scanner s ;
 	
@@ -47,16 +45,18 @@ public class Server {
 		
 			System.out.println("Please Enter Command >: ");
 			String commandIn = s.nextLine();
+			commandIn = commandIn.toLowerCase();
+			
 			commandIn.replaceAll("\\s", "");
 			
 			//if shut down is entered, signal the shutdown.
-			if(commandIn.equals(shutDown)) {
+			if(commandIn.equals("shutdown")) {
 				ServerControl.serverStop = true;
 				System.out.println("The Shut Down will now commence");
 				break;
 				
 			//if verbose is entered, signal verbose mode.
-			}else if(commandIn.equals(verbose)) {
+			}else if(commandIn.equals("verbose")) {
 				ServerControl.verboseMode = true;
 			
 			//if quiet is entered, exit verbose mode

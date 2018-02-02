@@ -6,6 +6,8 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 
+import apps.TFTPCommons;
+
 /**
  * This class has one function:
  * Receive incoming messages from the receive socket and create threads to handle them.
@@ -16,7 +18,6 @@ public class ErrorSimRecieveThread implements Runnable{
 	private byte[] receiveData;
 	private DatagramSocket receiveSocket;
 	
-	private final static int max_buffer = 120;
 	private int destinationPort;
 	private String destinationIP;
 	private ArrayList<Thread> activeThreads;
@@ -58,7 +59,7 @@ public class ErrorSimRecieveThread implements Runnable{
 		// and store the incoming request. We also retreive the port and ip of the requester.
 		
 		// Create a byte array for the incoming packet.
-		receiveData = new byte[max_buffer];
+		receiveData = new byte[TFTPCommons.max_buffer];
 		
 		// Create a packet for the incoming packet.
 		receivePacket = new DatagramPacket(receiveData, receiveData.length);

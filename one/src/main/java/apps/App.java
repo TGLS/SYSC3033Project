@@ -19,6 +19,7 @@ public class App
     	int outgoingPort = -1;
     	// Incoming Argument Handling
     	for (String s : args) {
+    		s = s.toLowerCase();
     		if ((s.equals("-v")) | (s.equals("-verbose"))) {
     			verbose = true;
     		}

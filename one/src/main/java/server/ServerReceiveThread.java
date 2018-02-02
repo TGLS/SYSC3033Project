@@ -26,7 +26,6 @@ public class ServerReceiveThread implements Runnable{
 		// Surrounded with try-catch because creating a new socket might fail.
 		try {
 			receiveSocket = new DatagramSocket(sourcePort);
-			receiveSocket.setSoTimeout(1000);
 		} catch (SocketException e) {
 			// Print a stack trace and exit.
 			e.printStackTrace();

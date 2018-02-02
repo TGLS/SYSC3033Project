@@ -11,8 +11,6 @@ import java.util.Scanner;
 public class Intermediate {
 	private Scanner s ;
 	private Thread errorSimRecieveThread;
-	private String shutDown = "shutdown"; 
-	private String verbose = "verbose";
 	
 	
 	public Intermediate(int sourcePort, String destinationIP, int destinationPort, boolean verbose) {
@@ -53,14 +51,16 @@ public class Intermediate {
 			String commandIn = s.nextLine();
 			commandIn.replaceAll("\\s", "");
 			
+			commandIn = commandIn.toLowerCase();
+			
 			//if shut down is entered, signal the shutdown.
-			if(commandIn.equals(shutDown)) {
+			if(commandIn.equals("shutdown")) {
 				IntermediateControl.IntermediateStop = true;
 				System.out.println("The Shut Down will now commence");
 				break;
 				
 			//if verbose is entered, signal verbose mode.
-			}else if(commandIn.equals(verbose)) {
+			}else if(commandIn.equals("verbose")) {
 				IntermediateControl.verboseMode = true;
 				
 			//if quiet is entered, exit verbose mode.
