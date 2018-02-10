@@ -79,20 +79,6 @@ public class Server {
 		//close the scanner 
 		s.close();
 		
-		//Wait for the receive thread to complete before exiting this 
-		//ensures that all threads will be complete before we finish.
-		try {
-			recieveThread.join();
-		} catch (InterruptedException e) {
-			System.out.println("There was an error shutting down the threads");
-			e.printStackTrace();
-			System.exit(1);
-		}
-		
-		//Notify the user of the completion
-		System.out.println("All the threads have completed goodbye ... ");
-		
-		
 		//terminate the program
 		System.exit(0);
 		
