@@ -1,10 +1,18 @@
 package server;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
+import apps.OutOfDiskSpaceException;
 import apps.TFTPCommons;
 
 /**
@@ -44,19 +52,62 @@ public class ServerResponseThread implements Runnable {
 		// If we received a read request
 		// We'll start sending data packets
 		if (receiveData[1] == 1) {
-			TFTPCommons.sendFile(TFTPCommons.extractFileName(receiveData, receivePacket.getLength()),sendReceiveSocket, ServerControl.verboseMode,
-					receivePacket.getAddress(), receivePacket.getPort());
+			// We can't write a file that doesn't exist, so let's check for it.
+			InputStream stream = null;
+			try {
+				stream = Files.newInputStream(Paths.get(TFTPCommons.extractFileName(receiveData, receivePacket.getLength())));
+				TFTPCommons.sendFile(stream,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort());
+				// Close the stream.
+				stream.close();
+			} catch (FileNotFoundException e) {
+				// Send a file not found error.
+				TFTPCommons.sendError(1,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort());
+			} catch (IOException e) {
+				// Print a stack trace and exit
+				e.printStackTrace();
+				return;
+			}
 		}
 		// If we received a write request,
 		// We'll send the first ACK and begin the write sequence.
 		else if (receiveData[1] == 2) {
+			OutputStream stream = null;
+			try {
+				stream = TFTPCommons.createFile(TFTPCommons.extractFileName(receiveData, receivePacket.getLength()), false);
+			} catch (FileAlreadyExistsException e) {
+				// Send a File Already Exists Error and break.
+				TFTPCommons.sendError(6,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort());
+				return;
+			} catch (OutOfDiskSpaceException e) {
+				// Send a Disk Full Error and break.
+				TFTPCommons.sendError(3,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort());
+				return;
+			} catch (AccessDeniedException e) {
+				// Send an Access Violation Error and break.
+				TFTPCommons.sendError(2,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort());
+				return;
+			}
+			
 			formWriteBegin();
 			if (ServerControl.verboseMode) {
 				printWriteBegin();
 			}
 			sendWriteBegin();
 			
-			TFTPCommons.receiveFile(TFTPCommons.extractFileName(receiveData, receivePacket.getLength()),sendReceiveSocket, ServerControl.verboseMode);
+			TFTPCommons.receiveFile(stream,sendReceiveSocket, ServerControl.verboseMode);
+			
+			// Close the stream.
+			try {
+				stream.close();
+			} catch (IOException e) {
+				// Print a stack trace and stop
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -95,7 +146,7 @@ public class ServerResponseThread implements Runnable {
 		}
 	}
 	
-	private boolean validateRequest() {
+	private Boolean validateRequest() {
 		// In this function, we determine whether or not the message we received
 		// is valid.
 		

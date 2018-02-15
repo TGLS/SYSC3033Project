@@ -6,8 +6,8 @@ package server;
  */
 
 public class ServerControl {
-	static boolean serverStop = false;
-	static boolean verboseMode = false; 
+	static Boolean serverStop = false;
+	static Boolean verboseMode = false; 
 
 	public ServerControl(){}
 	

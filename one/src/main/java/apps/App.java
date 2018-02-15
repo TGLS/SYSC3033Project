@@ -13,7 +13,7 @@ public class App
 {
 	public static void main( String[] args )
     {
-    	boolean verbose = false;
+    	Boolean verbose = false;
     	String outgoingIP = "127.0.0.1";
     	int incomingPort = -1;
     	int outgoingPort = -1;

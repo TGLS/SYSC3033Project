@@ -1,18 +1,20 @@
 package apps;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+
 
 /**
  * This class contains static functions used by multiple classes to facilitate TFTP.
@@ -50,7 +52,7 @@ public class TFTPCommons {
 		return "";
 	}
 	
-	public static void printMessage(boolean send, byte[] messageData, int dataLength) {
+	public static void printMessage(Boolean send, byte[] messageData, int dataLength) {
 		// Checksum is the sum of all the bytes, less overflows
 		int checksum = 0;
 		// First we convert the sent data into strings.
@@ -66,6 +68,7 @@ public class TFTPCommons {
 			// If the second byte is 2, the message is a Write Request.
 			// If the second byte is 3, the message is a Data.
 			// If the second byte is 4, the message is an Acknowledgement.
+			// If the second byte is 4, the message is an Error..
 			// Anything else we say it's invalid.
 			if (messageData[1] == 1) {
 				System.out.println("Read Request");
@@ -75,6 +78,8 @@ public class TFTPCommons {
 				System.out.println("Data");
 			} else if (messageData[1] == 4) {
 				System.out.println("Acknowledgment");
+			} else if (messageData[1] == 5) {
+				System.out.println("Error");
 			} else {
 				System.out.println("Invalid Message");
 			}
@@ -103,6 +108,12 @@ public class TFTPCommons {
 				int block_number = ((int)(messageData[2]) & 0xFF) * 256;
 				block_number = block_number + ((int)(messageData[3]) & 0xFF);
 				System.out.println("Block Number: " + block_number);
+			}
+			
+			// For Error Messages, print error code and message (if any)
+			if (messageData[1] == 5) {
+				// Print error message
+				printErrorMessage(messageData, dataLength);
 			}
 
 		} catch (ArrayIndexOutOfBoundsException e) {
@@ -143,6 +154,64 @@ public class TFTPCommons {
 		System.out.println("Checksum: " + String.format("%08X", checksum));
 	}
 	
+	public static void printErrorMessage(byte[] messageData, int dataLength) {
+		// Error code translation
+		switch (messageData[3]) {
+			case 0:
+				System.out.println("Not defined, see error message (if any).");
+				break;
+			case 1:
+				System.out.println("File not found.");
+				break;
+			case 2:
+				System.out.println("Access violation.");
+				break;
+			case 3:
+				System.out.println("Disk full or allocation exceeded.");
+				break;
+			case 4:
+				System.out.println("Illegal TFTP operation.");
+				break;
+			case 5:
+				System.out.println("Unknown transfer ID.");
+				break;
+			case 6:
+				System.out.println("File already exists.");
+				break;
+			case 7:
+				System.out.println("No such user.");
+				break;
+			default:
+				System.out.println("Invalid Message!");
+				break;
+		}
+		String message;
+		// If there's a message, print it.
+		if (messageData[4] == 0) {
+			message = "No Message.";
+		} else {
+			// Copy the byte array after the first four bytes
+			byte[] buffer = new byte[dataLength];
+			for (int n = 4; n < dataLength; n++) {
+				buffer[n - 4] = messageData[n];
+			}
+
+			// Now we convert the byte array to text, and split at null
+			// characters
+			String rawText;
+			try {
+				rawText = new String(buffer, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// Print a stack trace and exit.
+				e.printStackTrace();
+				return;
+			}
+			String[] text = rawText.split("\u0000");
+			message = text[0];
+		}
+		System.out.println(message);
+	}
+
 	public static void incrementBlockCounter(byte[] blockCounter) {
 		// This is simple. We take in a 2 byte block counter, and we increment it.
 		// We wrap around if necessary.
@@ -158,7 +227,7 @@ public class TFTPCommons {
 		}
 	}
 
-	public static void receiveFile(String fileName, DatagramSocket sendReceiveSocket, boolean verbose) {
+	public static void receiveFile(OutputStream stream, DatagramSocket sendReceiveSocket, Boolean verbose) {
 		// First of all, let's create a block counter and some other important variables
 		byte[] blockCounter = {0, 1};
 		byte[] receiveData;
@@ -166,17 +235,8 @@ public class TFTPCommons {
 		DatagramPacket receivePacket;
 		DatagramPacket respondPacket;
 		
-		// We're going to use Files to write to the file.
-		// So let's get a path to a file.
-		Path file = Paths.get(fileName);
-		
-		// Because it's a new file,  we have to initialize it first.
-		// So let's create an empty array.
-		byte[] data = {};
+		// We are assuming that we are being given a FileOutputStream in Append mode.
 		try {
-			// Then write it to the file.
-			Files.write(file, data);
-			
 			// Now let's start looping.
 			while (true) {
 				// First, receive a packet
@@ -195,6 +255,17 @@ public class TFTPCommons {
 					printMessage(false, receiveData, receivePacket.getLength());
 				}
 				
+				// Check if it's an Error packet.
+				if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
+					// Print the error message if we're not verbose
+					if (!verbose) {
+						printErrorMessage(receiveData, receivePacket.getLength());
+					}
+					
+					// Stop; we won't be receiving any more packets after this.
+					return;
+				}
+				
 				// Check if it's a data packet
 				// And whether if its block counter matches
 				if (receivePacket.getLength() >= 4) {
@@ -203,9 +274,28 @@ public class TFTPCommons {
 						(receiveData[3] == blockCounter[1])) {
 						// If it does, append the data block, if any
 						if (receiveData.length > 4) {
-							Files.write(file, Arrays.copyOfRange(receiveData, 4, receivePacket.getLength()), StandardOpenOption.APPEND);
+							try {
+								stream.write(Arrays.copyOfRange(receiveData, 4, receivePacket.getLength()));
+							} catch (AccessDeniedException e) {
+								// Send an Access Violation Error and break.
+								TFTPCommons.sendError(2,sendReceiveSocket, verbose,
+										receivePacket.getAddress(), receivePacket.getPort());
+								return;
+							} catch (IOException e) {
+								// Out of disk space errors throw this.
+								// Check if the disk is out of space
+								if (new File("/").getUsableSpace() == 0) {
+									// Send a Disk Full Error and break.
+									TFTPCommons.sendError(3,sendReceiveSocket, verbose,
+											receivePacket.getAddress(), receivePacket.getPort());
+									return;
+								} else {
+									// Print a stack trace
+									e.printStackTrace();
+								}
+							}
 						}
-						
+
 						// Then we respond with an acknowledge.
 						respondData = new byte[] {0, 4, blockCounter[0], blockCounter[1]};
 						respondPacket = new DatagramPacket(respondData, 4, receivePacket.getAddress(),
@@ -229,13 +319,12 @@ public class TFTPCommons {
 				}
 			}
 		} catch (IOException e) {
-			// Print an error and quit
+			// Print an error and stop
 			e.printStackTrace();
-			System.exit(1);
 		}
 	}
 	
-	public static void sendFile(String fileName, DatagramSocket sendReceiveSocket, boolean verbose, InetAddress targetAddress, int targetPort) {
+	public static void sendFile(InputStream stream, DatagramSocket sendReceiveSocket, Boolean verbose, InetAddress targetAddress, int targetPort) {
 		// First of all, let's create a block counter and some other important variables
 		byte[] blockCounter = {0, 1};
 		ArrayList<Byte> respondDataBuilder;
@@ -243,12 +332,10 @@ public class TFTPCommons {
 		byte[] respondData; 
 		DatagramPacket receivePacket;
 		DatagramPacket respondPacket;
-		boolean cont = true;
-		FileInputStream in = null;
+		Boolean cont = true;
 		
 		// We're going to use a FileInputStream to read the file.
 		try {
-			in = new FileInputStream(fileName);
 			// Now, let's start looping
 			while (cont) {
 				// Start building the message
@@ -263,7 +350,7 @@ public class TFTPCommons {
 				// Break on EOF (-1) and when we reach max packet size.
 				// On EOF, we stop the outer loop too.
 				while (respondDataBuilder.size() < max_buffer) {
-					int temp = in.read();
+					int temp = stream.read();
 					if (temp == -1) {
 						cont = false;
 						break;
@@ -320,26 +407,126 @@ public class TFTPCommons {
 							break;
 						}
 					}
+					
+					// Check if it's an Error packet.
+					if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
+						// Print the error message if we're not verbose
+						if (!verbose) {
+							printErrorMessage(receiveData, receivePacket.getLength());
+						}
+						
+						// Stop; we won't be receiving any more packets after this.
+						return;
+					}
 				}
 			}
 			
-		} catch (FileNotFoundException e) {
-			// Print an error and quit
+		} catch (AccessDeniedException e) {
+			// Send an Access Violation Error and break.
+			TFTPCommons.sendError(2,sendReceiveSocket, verbose,
+					targetAddress, targetPort);
+			return;
+		}  catch (IOException e) {
+			// Print an error and stop
 			e.printStackTrace();
-			System.exit(1);
+			return;
+		}
+	}
+
+	public static void sendError(int errorCode, DatagramSocket sendReceiveSocket, Boolean verboseMode, InetAddress address,
+			int port, String specialMessage) {
+		// Construct the message.
+		ArrayList<Byte> errorMessageBuilder = new ArrayList<Byte>();
+		// Message op # first
+		errorMessageBuilder.add((byte) 0);
+		errorMessageBuilder.add((byte) 5);
+		
+		// Then the errorCode
+		errorMessageBuilder.add((byte) 0);
+		errorMessageBuilder.add((byte) errorCode);
+		
+		// Then the message, if any.
+		byte[] stringBuffer = specialMessage.getBytes();
+		for (byte b : stringBuffer) {
+			errorMessageBuilder.add(b);
+		}
+		
+		// Then the final null.
+		errorMessageBuilder.add((byte) 0);
+		
+		// Now we make an array
+		// We make an array of the same size as the buffer, and then we copy the
+		// old bytes over.
+		// n is used to keep track of the index.
+		byte[] sendData = new byte[errorMessageBuilder.size()];
+		int n = 0;
+		for (Byte b : errorMessageBuilder) {
+			sendData[n] = b;
+			n++;
+		}
+		
+		// And now we build the packet
+		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, address, port);
+		
+		// Print it if verbose.
+		if (verboseMode) {
+			printMessage(true, sendData, sendData.length);
+		}
+		
+		// Then send it.
+		try {
+			sendReceiveSocket.send(sendPacket);
 		} catch (IOException e) {
-			// Print an error and quit
+			// Print an error and stop.
 			e.printStackTrace();
-			System.exit(1);
-		} finally {
-			try {
-				// Close the in stream.
-				in.close();
-			} catch (IOException e) {
-				// Print an error and quit
+			return;
+		}
+	}
+	
+	public static void sendError(int errorCode, DatagramSocket sendReceiveSocket, Boolean verboseMode, InetAddress address,
+			int port) {
+		// This is a simpler version of sendError that eliminates the message argument
+		sendError(errorCode, sendReceiveSocket, verboseMode, address, port, "");
+	}
+	
+	public static OutputStream createFile(String fileName, Boolean force) throws FileAlreadyExistsException, OutOfDiskSpaceException, AccessDeniedException {
+		// This function creates a blank file and a FileOutputStream in Append mode
+		
+		File file = new File(fileName);
+
+		try {
+			// If force, delete a file to prevent a fileAlreadyExists from being thrown.
+			if (force) {
+				file.delete();
+			}
+			if (file.createNewFile()) {
+				// Return a FileOutputStream in append mode.
+				return Files.newOutputStream(file.toPath());
+			} else {
+				// Throw a FileAlreadyExistsException to indicate the file exists.
+				throw new FileAlreadyExistsException(fileName);
+			}
+		} catch (FileAlreadyExistsException e) {
+			// We threw it, so throw it!
+			throw e;
+		} catch (AccessDeniedException e) {
+			// We handle this separately.
+			throw e;
+		} catch (FileNotFoundException e) {
+			// Print a stack trace
+			// This block shouldn't ever be accessed.
+			e.printStackTrace();
+		} catch (IOException e) {
+			// Out of disk space errors throw this.
+			// Check if the disk is out of space
+			if (new File("/").getUsableSpace() == 0) {
+				// If so, throw an OutOfDiskSpaceException
+				throw new OutOfDiskSpaceException();
+			} else {
+				// Print a stack trace
 				e.printStackTrace();
-				System.exit(1);
 			}
 		}
+		return null;
 	}
 }

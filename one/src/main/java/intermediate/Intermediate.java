@@ -13,7 +13,7 @@ public class Intermediate {
 	private Thread errorSimRecieveThread;
 	
 	
-	public Intermediate(int sourcePort, String destinationIP, int destinationPort, boolean verbose) {
+	public Intermediate(int sourcePort, String destinationIP, int destinationPort, Boolean verbose) {
 		// Create a DatagramSocket for reception with the port number you were given.
 		// Surrounded with try-catch because creating a new socket might fail.
 		

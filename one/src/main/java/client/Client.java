@@ -1,11 +1,17 @@
 package client;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 
+import apps.OutOfDiskSpaceException;
 import apps.TFTPCommons;
 
 /**
@@ -20,9 +26,9 @@ public class Client {
 	private byte[] sendData;
 	private InetAddress destinationAddress;
 	private int destinationPort;
-	private boolean verbose;
+	private Boolean verbose;
 
-	public Client(String destinationIP, int destinationPort, boolean verbose) {
+	public Client(String destinationIP, int destinationPort, Boolean verbose) {
 		this.verbose = verbose;
 		this.destinationPort = destinationPort;
 		try {
@@ -88,10 +94,37 @@ public class Client {
 			printRequest();
 		}
 		sendRequest();
-		TFTPCommons.receiveFile(fileName, sendReceiveSocket, verbose);
+		try {
+			OutputStream stream = TFTPCommons.createFile(fileName, true);
+			TFTPCommons.receiveFile(stream, sendReceiveSocket, verbose);
+			
+			// Close the stream.
+			stream.close();
+		} catch (AccessDeniedException e) {
+			// Inform the user the read failed to be created because of an access violation.
+			System.out.println("There was an access violation. This operation has been cancelled.");
+		}  catch (OutOfDiskSpaceException e) {
+			// Inform the user the read failed to be created because the disk is full.
+			System.out.println("The disk is full. This operation has been cancelled.");
+		} catch (FileAlreadyExistsException e) {
+			// This block should never happen because the force Boolean will stop it from happening.
+			e.printStackTrace();
+		} catch (IOException e) {
+			// Print a stack trace and stop
+			e.printStackTrace();
+		}
 	}
 	
 	public void write(String fileName, String mode) {
+		// We can't write a file that doesn't exist, so let's check for it.
+		FileInputStream stream = null;
+		try {
+			stream = new FileInputStream(fileName); 
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found. Aborting.");
+			return;
+		}
+		
 		formRequest(false, fileName, mode);
 		// No printing if it isn't verbose.
 		if (verbose) {
@@ -107,6 +140,26 @@ public class Client {
 				printResponse();
 			}
 			
+			// Check if it's an Error packet.
+			if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
+				// Print the error message if we're not verbose
+				if (!verbose) {
+					TFTPCommons.printErrorMessage(receiveData, receivePacket.getLength());
+				}
+				
+				
+				// Close the stream. 
+				try {
+					stream.close();
+				} catch (IOException e) {
+					// Print a stack trace and stop
+					e.printStackTrace();
+				}
+				
+				// Stop; we won't be receiving any more packets after this.
+				return;
+			}
+			
 			// Check if it's an acknowledge and it's block zero
 			if (receivePacket.getLength() == 4) {
 				if ((receiveData[0] == 0) & (receiveData[1] == 4) &
@@ -118,8 +171,16 @@ public class Client {
 		}
 		
 		// Start sending data packets
-		TFTPCommons.sendFile(fileName, sendReceiveSocket, verbose,
+		TFTPCommons.sendFile(stream, sendReceiveSocket, verbose,
 				receivePacket.getAddress(), receivePacket.getPort());
+		
+		// Close the stream.
+		try {
+			stream.close();
+		} catch (IOException e) {
+			// Print a stack trace and stop
+			e.printStackTrace();
+		}
 	}
 
 	private void receiveResponse() {
@@ -161,7 +222,7 @@ public class Client {
 		}
 	}
 
-	private void formRequest(boolean read, String fileName, String mode) {
+	private void formRequest(Boolean read, String fileName, String mode) {
 		// To create the request, we create an arrayList of bytes,
 		// then add all the bytes to it. Then we convert it to a regular array,
 		// then build a packet.

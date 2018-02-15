@@ -13,7 +13,7 @@ public class Server {
 	private Thread recieveThread;
 	private Scanner s ;
 	
-	public Server(int sourcePort, boolean verbose) {
+	public Server(int sourcePort, Boolean verbose) {
 		// This method will start the server receive thread and then proceed to 
 		// Run the Server CLI: 
 		

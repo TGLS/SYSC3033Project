@@ -24,7 +24,7 @@ public class ErrorSimulatorThread implements Runnable{
 	private int serverPort;
 	private InetAddress clientAddress;
 	private int clientPort;
-	private boolean firstContact = true; 
+	private Boolean firstContact = true; 
 	
 	public ErrorSimulatorThread(DatagramPacket receivePacket, String destinationIP, int destinationPort) {
 	
@@ -81,6 +81,11 @@ public class ErrorSimulatorThread implements Runnable{
 					}
 				}
 			}
+			// If we receive a error packet
+			if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
+				// Kill the thread. Error packets are Terminal
+				break;
+			}
 			
 			receiveResponse();
 			if(IntermediateControl.verboseMode) {
@@ -111,6 +116,11 @@ public class ErrorSimulatorThread implements Runnable{
 						}
 					}
 				}
+			}
+			// If we receive a error packet
+			if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
+				// Kill the thread. Error packets are Terminal
+				break;
 			}
 			
 			receiveRequest();

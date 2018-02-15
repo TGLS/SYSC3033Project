@@ -5,8 +5,8 @@ package intermediate;
  * Send setting information to the ErroSimulator and ErrorSimRecieve Threads from the main Server Thread. 
  */
 public class IntermediateControl {
-	static boolean IntermediateStop = false;
-	static boolean verboseMode = false; 
+	static Boolean IntermediateStop = false;
+	static Boolean verboseMode = false; 
 
 	public IntermediateControl(){}
 }
