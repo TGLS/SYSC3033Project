@@ -1,6 +1,6 @@
 package server;
 
-import java.io.FileNotFoundException;
+import java.nio.file.NoSuchFileException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -60,7 +60,7 @@ public class ServerResponseThread implements Runnable {
 						receivePacket.getAddress(), receivePacket.getPort());
 				// Close the stream.
 				stream.close();
-			} catch (FileNotFoundException e) {
+			} catch (NoSuchFileException e) {
 				// Send a file not found error.
 				TFTPCommons.sendError(1,sendReceiveSocket, ServerControl.verboseMode,
 						receivePacket.getAddress(), receivePacket.getPort());

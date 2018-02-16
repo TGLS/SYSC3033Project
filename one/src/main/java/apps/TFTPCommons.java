@@ -1,7 +1,7 @@
 package apps;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.nio.file.NoSuchFileException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -512,7 +512,7 @@ public class TFTPCommons {
 		} catch (AccessDeniedException e) {
 			// We handle this separately.
 			throw e;
-		} catch (FileNotFoundException e) {
+		} catch (NoSuchFileException e) {
 			// Print a stack trace
 			// This block shouldn't ever be accessed.
 			e.printStackTrace();

@@ -2,13 +2,16 @@ package client;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 import apps.OutOfDiskSpaceException;
@@ -117,11 +120,15 @@ public class Client {
 	
 	public void write(String fileName, String mode) {
 		// We can't write a file that doesn't exist, so let's check for it.
-		FileInputStream stream = null;
+		InputStream stream = null;
 		try {
-			stream = new FileInputStream(fileName); 
-		} catch (FileNotFoundException e) {
+			stream = Files.newInputStream(Paths.get(fileName)); 
+		} catch (NoSuchFileException e) {
 			System.out.println("File not found. Aborting.");
+			return;
+		} catch (IOException e) {
+			// Print a stack trace and exit
+			e.printStackTrace();
 			return;
 		}
 		
