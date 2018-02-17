@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -65,8 +64,9 @@ public class ServerResponseThread implements Runnable {
 				TFTPCommons.sendError(1,sendReceiveSocket, ServerControl.verboseMode,
 						receivePacket.getAddress(), receivePacket.getPort());
 			} catch (IOException e) {
-				// Print a stack trace and exit
-				e.printStackTrace();
+				// Send an Access Violation Error and break.
+				TFTPCommons.sendError(2,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort());
 				return;
 			}
 		}
@@ -86,7 +86,7 @@ public class ServerResponseThread implements Runnable {
 				TFTPCommons.sendError(3,sendReceiveSocket, ServerControl.verboseMode,
 						receivePacket.getAddress(), receivePacket.getPort());
 				return;
-			} catch (AccessDeniedException e) {
+			} catch (IOException e) {
 				// Send an Access Violation Error and break.
 				TFTPCommons.sendError(2,sendReceiveSocket, ServerControl.verboseMode,
 						receivePacket.getAddress(), receivePacket.getPort());
@@ -99,7 +99,8 @@ public class ServerResponseThread implements Runnable {
 			}
 			sendWriteBegin();
 			
-			TFTPCommons.receiveFile(stream,sendReceiveSocket, ServerControl.verboseMode);
+			// Keep the result of whether result worked
+			boolean received = TFTPCommons.receiveFile(stream,sendReceiveSocket, ServerControl.verboseMode);
 			
 			// Close the stream.
 			try {
@@ -107,6 +108,15 @@ public class ServerResponseThread implements Runnable {
 			} catch (IOException e) {
 				// Print a stack trace and stop
 				e.printStackTrace();
+			}
+			
+			// receiveFile returns false if it fails. So we'll delete the file
+			if (!received) {
+				try {
+					Files.delete(Paths.get(TFTPCommons.extractFileName(receiveData, receivePacket.getLength())));
+				} catch (IOException e) {
+					// Do nothing. The file probably disappeared.
+				}
 			}
 		}
 	}

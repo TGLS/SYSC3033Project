@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-
 /**
  * This class contains static functions used by multiple classes to facilitate TFTP.
  */
@@ -227,7 +226,7 @@ public class TFTPCommons {
 		}
 	}
 
-	public static void receiveFile(OutputStream stream, DatagramSocket sendReceiveSocket, Boolean verbose) {
+	public static boolean receiveFile(OutputStream stream, DatagramSocket sendReceiveSocket, Boolean verbose) {
 		// First of all, let's create a block counter and some other important variables
 		byte[] blockCounter = {0, 1};
 		byte[] receiveData;
@@ -263,7 +262,7 @@ public class TFTPCommons {
 					}
 					
 					// Stop; we won't be receiving any more packets after this.
-					return;
+					return false;
 				}
 				
 				// Check if it's a data packet
@@ -280,7 +279,7 @@ public class TFTPCommons {
 								// Send an Access Violation Error and break.
 								TFTPCommons.sendError(2,sendReceiveSocket, verbose,
 										receivePacket.getAddress(), receivePacket.getPort());
-								return;
+								return false;
 							} catch (IOException e) {
 								// Out of disk space errors throw this.
 								// Check if the disk is out of space
@@ -288,10 +287,12 @@ public class TFTPCommons {
 									// Send a Disk Full Error and break.
 									TFTPCommons.sendError(3,sendReceiveSocket, verbose,
 											receivePacket.getAddress(), receivePacket.getPort());
-									return;
+									return false;
 								} else {
-									// Print a stack trace
-									e.printStackTrace();
+									// Send a Access Violation and break.
+									TFTPCommons.sendError(2,sendReceiveSocket, verbose,
+											receivePacket.getAddress(), receivePacket.getPort());
+									return false;
 								}
 							}
 						}
@@ -322,6 +323,8 @@ public class TFTPCommons {
 			// Print an error and stop
 			e.printStackTrace();
 		}
+		
+		return true;
 	}
 	
 	public static void sendFile(InputStream stream, DatagramSocket sendReceiveSocket, Boolean verbose, InetAddress targetAddress, int targetPort) {
@@ -346,17 +349,25 @@ public class TFTPCommons {
 				respondDataBuilder.add(blockCounter[0]);
 				respondDataBuilder.add(blockCounter[1]);
 				
-				// Read in bytes from the file.
-				// Break on EOF (-1) and when we reach max packet size.
-				// On EOF, we stop the outer loop too.
-				while (respondDataBuilder.size() < max_buffer) {
-					int temp = stream.read();
-					if (temp == -1) {
-						cont = false;
-						break;
-					} else {
-						respondDataBuilder.add((byte) temp);
+				
+				try {
+					// Read in bytes from the file.
+					// Break on EOF (-1) and when we reach max packet size.
+					// On EOF, we stop the outer loop too.
+					while (respondDataBuilder.size() < max_buffer) {
+						int temp = stream.read();
+						if (temp == -1) {
+							cont = false;
+							break;
+						} else {
+							respondDataBuilder.add((byte) temp);
+						}
 					}
+				} catch (IOException e) {
+					// Send an Access Violation Error and break.
+					TFTPCommons.sendError(2,sendReceiveSocket, verbose,
+							targetAddress, targetPort);
+					return;
 				}
 				
 				// Now we make an array
@@ -471,6 +482,9 @@ public class TFTPCommons {
 		// Print it if verbose.
 		if (verboseMode) {
 			printMessage(true, sendData, sendData.length);
+		} else {
+			// If not, print the brief version.
+			printErrorMessage(sendData, sendData.length);
 		}
 		
 		// Then send it.
@@ -489,7 +503,7 @@ public class TFTPCommons {
 		sendError(errorCode, sendReceiveSocket, verboseMode, address, port, "");
 	}
 	
-	public static OutputStream createFile(String fileName, Boolean force) throws FileAlreadyExistsException, OutOfDiskSpaceException, AccessDeniedException {
+	public static OutputStream createFile(String fileName, Boolean force) throws IOException {
 		// This function creates a blank file and a FileOutputStream in Append mode
 		
 		File file = new File(fileName);
@@ -509,9 +523,6 @@ public class TFTPCommons {
 		} catch (FileAlreadyExistsException e) {
 			// We threw it, so throw it!
 			throw e;
-		} catch (AccessDeniedException e) {
-			// We handle this separately.
-			throw e;
 		} catch (NoSuchFileException e) {
 			// Print a stack trace
 			// This block shouldn't ever be accessed.
@@ -523,8 +534,8 @@ public class TFTPCommons {
 				// If so, throw an OutOfDiskSpaceException
 				throw new OutOfDiskSpaceException();
 			} else {
-				// Print a stack trace
-				e.printStackTrace();
+				// Otherwise we treat it as an IOException.
+				throw e;
 			}
 		}
 		return null;

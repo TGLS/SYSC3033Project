@@ -1,7 +1,6 @@
 package client;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.io.IOException;
@@ -10,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
@@ -99,22 +97,27 @@ public class Client {
 		sendRequest();
 		try {
 			OutputStream stream = TFTPCommons.createFile(fileName, true);
-			TFTPCommons.receiveFile(stream, sendReceiveSocket, verbose);
-			
+			boolean received = TFTPCommons.receiveFile(stream, sendReceiveSocket, verbose);
 			// Close the stream.
 			stream.close();
+			
+			// receiveFile returns false if it fails. So we'll delete the file
+			if (!received) {
+				try {
+					Files.delete(Paths.get(fileName));
+				} catch (IOException e) {
+					// Do nothing. The file probably got deleted beforehand somehow.
+				}
+			}
 		} catch (AccessDeniedException e) {
 			// Inform the user the read failed to be created because of an access violation.
 			System.out.println("There was an access violation. This operation has been cancelled.");
 		}  catch (OutOfDiskSpaceException e) {
 			// Inform the user the read failed to be created because the disk is full.
 			System.out.println("The disk is full. This operation has been cancelled.");
-		} catch (FileAlreadyExistsException e) {
-			// This block should never happen because the force Boolean will stop it from happening.
-			e.printStackTrace();
 		} catch (IOException e) {
-			// Print a stack trace and stop
-			e.printStackTrace();
+			// Inform the user there was an access violation.
+			System.out.println("There was an access violation. This operation has been cancelled.");
 		}
 	}
 	
