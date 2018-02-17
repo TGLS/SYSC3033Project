@@ -92,11 +92,7 @@ public class Client {
 		OutputStream stream = null;
 		try {
 			stream = TFTPCommons.createFile(fileName, true);
-		} catch (AccessDeniedException e) {
-			// Inform the user the read failed to be created because of an access violation.
-			System.out.println("There was an access violation. This operation has been cancelled.");
-			return;
-		}  catch (OutOfDiskSpaceException e) {
+		} catch (OutOfDiskSpaceException e) {
 			// Inform the user the read failed to be created because the disk is full.
 			System.out.println("The disk is full. This operation has been cancelled.");
 			return;
@@ -128,11 +124,11 @@ public class Client {
 		try {
 			stream = Files.newInputStream(Paths.get(fileName)); 
 		} catch (NoSuchFileException e) {
-			System.out.println("File not found. Aborting.");
+			System.out.println("File not found. This operation has been cancelled.");
 			return;
 		} catch (IOException e) {
-			// Print a stack trace and exit
-			e.printStackTrace();
+			// Inform the user there was an access violation.
+			System.out.println("There was an access violation. This operation has been cancelled.");
 			return;
 		}
 		
