@@ -115,7 +115,7 @@ public class ServerResponseThread implements Runnable {
 				try {
 					Files.delete(Paths.get(TFTPCommons.extractFileName(receiveData, receivePacket.getLength())));
 				} catch (IOException e) {
-					// Do nothing. The file probably disappeared.
+					// Do nothing. The file probably got deleted beforehand somehow.
 				}
 			}
 		}
