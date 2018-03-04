@@ -26,6 +26,12 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
+	// packet counters for error simulation
+	//private int ackCounter =0;
+	//private int wrqCounter =0;
+	//private int rrqCounter =0;
+	//private int dataCounter =0;
+	
 	public ErrorSimulatorThread(DatagramPacket receivePacket, String destinationIP, int destinationPort) {
 	
 		try {
@@ -52,15 +58,18 @@ public class ErrorSimulatorThread implements Runnable{
 		byte[] lastBlock = null;
 		
 		while(true) {
+			
+			System.out.println("beginning of the loop");
 			if(IntermediateControl.verboseMode) {
 				printRequest();
 			}
-			formRequest();
+			formSendPacket();
 			
 			if(IntermediateControl.verboseMode) {
 				reprintRequest();
 			}
-			sendRequest();
+			
+			sendPacket();
 			// If we receive a non-full length packet,
 			if ((receivePacket.getLength() < TFTPCommons.max_buffer) & (receivePacket.getLength() >= 4)) {
 				// And it's a Data packet
@@ -87,44 +96,9 @@ public class ErrorSimulatorThread implements Runnable{
 				break;
 			}
 			
-			receiveResponse();
-			if(IntermediateControl.verboseMode) {
-				printResponse();
-			}
-			formResponse();
-			if(IntermediateControl.verboseMode) {
-				reprintResponse();
-			}
-			sendResponse();
-			
-			// If we receive a non-full length packet,
-			if ((receivePacket.getLength() < TFTPCommons.max_buffer) & (receivePacket.getLength() >= 4)) {
-				// And it's a Data packet
-				if ((receiveData[0] == 0) & (receiveData[1] == 3)) {
-					// Set lastBlock properly.
-					lastBlock = new byte[] {receiveData[2], receiveData[3]};
-				}
-			}
-			// If we receive an acknowledge packet
-			if (receivePacket.getLength() ==  4) {
-				if ((receiveData[0] == 0) & (receiveData[1] == 4)) {
-					// And it matches block number with the previous value
-					if (lastBlock != null) {
-						if ((receiveData[2] == lastBlock[0]) & (receiveData[3] == lastBlock[1])) {
-							// Kill the thread.
-							break;
-						}
-					}
-				}
-			}
-			// If we receive a error packet
-			if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
-				// Kill the thread. Error packets are Terminal
-				break;
-			}
-			
-			receiveRequest();
+			receivePacket(); 
 		}
+		System.out.println("Problem");
 		sendReceiveSocket.close();
 	}
 
@@ -133,36 +107,15 @@ public class ErrorSimulatorThread implements Runnable{
 		TFTPCommons.printMessage(false, receiveData, receivePacket.getLength());
 	}
 	
-	
-	private void formRequest() {
-		// To create the request, we have the sendData point to the receiveData
-		sendData = receiveData;
-		
-		// And now we build the packet
-		sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), serverAddress,
-				serverPort);
-	}
-	
-	
 	private void reprintRequest() {
 		TFTPCommons.printMessage(true, sendData, sendPacket.getLength());
 	}
 	
+	// This should receive a packet gracefully  
+	// Determine if its going to the client or server
+	// and send appropriatly 
+	private void receivePacket() {
 	
-	private void sendRequest() {
-		// Here, we're going to create a new socket (the notional sendSocket)
-		// Send the response packet, and then close the socket.
-		try {
-			sendReceiveSocket.send(sendPacket);
-		} catch (IOException e) {
-			e.printStackTrace();
-			sendReceiveSocket.close();
-			System.exit(1);
-		}
-	}
-	
-	
-	private void receiveResponse() {
 		// In this function, we create a new packet to store and incoming response,
 		// and store the incoming response.
 		
@@ -182,41 +135,38 @@ public class ErrorSimulatorThread implements Runnable{
 			sendReceiveSocket.close();
 			System.exit(1);
 		}
+	//	System.out.println("Recieved a packet !" + receivePacket.getAddress().equals(clientAddress));
 		if(firstContact) {
+			System.out.println("First Contact!");
 			serverAddress = receivePacket.getAddress();
 			serverPort = receivePacket.getPort();
 			firstContact = false;
 		}
+		System.out.println("Recieved a packet 2 !");
 		
 	}
 	
-	
-	private void printResponse() {
-		TFTPCommons.printMessage(false, receiveData, receivePacket.getLength());
-	}
-	
-	
-	private void formResponse() {
-		// To create the response, we have the sendData point to the receiveData
+	// this should be generic ie should be able to send to either the server or client depending on the packet that comes in
+	private void formSendPacket() {
+		
+		// To create the request, we have the sendData point to the receiveData
 		sendData = receiveData;
 		
-		// And now we build the packet, with the address and port we retrieved earlier
-		sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), clientAddress,
-				clientPort);
+		// if the receivePacket address is the client send to the sever 
+		if(receivePacket.getAddress().equals(clientAddress) && receivePacket.getPort() == clientPort) {
+			System.out.println("Sending to the Server !");
+			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), serverAddress,
+					serverPort);
+			
+		}else {
+			// if not send to the client 
+			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), clientAddress,
+					clientPort);
+		}
 	}
 	
-	
-	private void reprintResponse() {
-		TFTPCommons.printMessage(true, sendData, sendPacket.getLength());
-	}
-	
-	private void sendResponse() {
+	private void sendPacket() {
 		// Here, we're going to use the sendReceiveSocket to send the 
-		// response packet, and then close the socket.
-		// If I were not bound by the specification, I'd create a new socket,
-		// like the server does, so a rogue client couldn't attempt to disrupt
-		// intermediate/server operations.
-		
 		try {
 			sendReceiveSocket.send(sendPacket);
 		} catch (IOException e) {
@@ -226,31 +176,6 @@ public class ErrorSimulatorThread implements Runnable{
 			System.exit(1);
 		}
 	}
-
-	private void receiveRequest() {
-		// In this function, we create a new packet to store and incoming request,
-		// and store the incoming request. We also retrieve the port and IP of the requester.
-		
-		// Create a byte array for the incoming packet.
-		receiveData = new byte[TFTPCommons.max_buffer];
-		
-		// Create a packet for the incoming packet.
-		receivePacket = new DatagramPacket(receiveData, receiveData.length);
-		
-		// Receive a message from the reception socket.
-		// Surrounded with try-catch because receiving a message might fail.
-		try {
-			sendReceiveSocket.receive(receivePacket);
-			
-			//if received create a thread 	
-			
-		} catch(IOException ste) {
-			ste.printStackTrace();
-			sendReceiveSocket.close();
-			System.exit(1);
-			
-		}
-		
-		
-	}	
+	
+	
 }
