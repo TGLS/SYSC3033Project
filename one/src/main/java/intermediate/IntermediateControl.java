@@ -7,6 +7,10 @@ package intermediate;
 public class IntermediateControl {
 	static Boolean IntermediateStop = false;
 	static Boolean verboseMode = false; 
+	static String mode = "00"; // default to the basic 
+	static String packetType = ""; 
+	static int packetNumber ;
+	static int specification ;
 
 	public IntermediateControl(){}
 }
