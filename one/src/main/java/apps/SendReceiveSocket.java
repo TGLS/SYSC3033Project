@@ -6,6 +6,12 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
+/**
+ * This class is a fairly transparent wrapper for DatagramSocket.
+ * Major differences are that receive takes a verbose argument,
+ * and it will attempt to resend on timeout (locked at 1000 ms)
+ */
+
 public class SendReceiveSocket {
 	private DatagramSocket socket;
 	private DatagramPacket previousPacket;
@@ -55,7 +61,7 @@ public class SendReceiveSocket {
 		socket.send(sendPacket);
 		
 		// Check whether the datagram packet is an ACK or not.
-		if ((sendPacket.getData()[0] == 0) | (sendPacket.getData()[1] == 4)) {
+		if ((sendPacket.getData()[0] == 0) & (sendPacket.getData()[1] == 4)) {
 			// Clear the previousPacket
 			previousPacket = null;
 		} else {
