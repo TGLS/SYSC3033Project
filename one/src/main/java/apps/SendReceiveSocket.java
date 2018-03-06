@@ -23,10 +23,11 @@ public class SendReceiveSocket {
 		}
 	}
 
-	public void receive(DatagramPacket receivePacket) throws IOException {
+	public void receive(DatagramPacket receivePacket, boolean verbose) throws IOException {
 		// Until we receive a 
 		while (true) {
 			try {
+		
 				// Attempt to receive a packet.
 				socket.receive(receivePacket);
 				
@@ -35,6 +36,9 @@ public class SendReceiveSocket {
 			} catch (SocketTimeoutException e) {
 				// Retransmit the last sent packet, unless it's an ACK or we haven't sent a packet yet.
 				if (previousPacket != null) {
+					if (verbose) {
+						TFTPCommons.printMessage(true, previousPacket.getData(), previousPacket.getLength());
+					}
 					socket.send(previousPacket);
 				}
 			}

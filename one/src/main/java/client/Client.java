@@ -201,7 +201,7 @@ public class Client {
 		// Receive a message from the reception socket.
 		// Surrounded with try-catch because receiving a message might fail.
 		try {
-			sendReceiveSocket.receive(receivePacket);
+			sendReceiveSocket.receive(receivePacket, verbose);
 		} catch (IOException e) {
 			// Print a stack trace, close the socket, and exit.
 			e.printStackTrace();
