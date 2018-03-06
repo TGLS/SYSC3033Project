@@ -246,7 +246,7 @@ public class TFTPCommons {
 					
 				// Receive a message from the socket.
 				// Surrounded with try-catch because receiving a message might fail.
-				sendReceiveSocket.receive(receivePacket);
+				sendReceiveSocket.receive(receivePacket, verbose);
 				
 				// Print it if we're being verbose
 				if (verbose) {
@@ -399,7 +399,7 @@ public class TFTPCommons {
 					receivePacket = new DatagramPacket(receiveData, receiveData.length);
 						
 					// Receive a message from the socket.
-					sendReceiveSocket.receive(receivePacket);
+					sendReceiveSocket.receive(receivePacket, verbose);
 					
 					// Print it if we're being verbose
 					if (verbose) {
