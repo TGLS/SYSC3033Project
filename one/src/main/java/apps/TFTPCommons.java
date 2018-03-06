@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
@@ -226,7 +225,7 @@ public class TFTPCommons {
 		}
 	}
 
-	public static boolean receiveFile(OutputStream stream, DatagramSocket sendReceiveSocket, Boolean verbose) {
+	public static boolean receiveFile(OutputStream stream, SendReceiveSocket sendReceiveSocket, Boolean verbose) {
 		// First of all, let's create a block counter and some other important variables
 		byte[] blockCounter = {0, 1};
 		byte[] receiveData;
@@ -327,7 +326,7 @@ public class TFTPCommons {
 		return true;
 	}
 	
-	public static void sendFile(InputStream stream, DatagramSocket sendReceiveSocket, Boolean verbose, InetAddress targetAddress, int targetPort) {
+	public static void sendFile(InputStream stream, SendReceiveSocket sendReceiveSocket, Boolean verbose, InetAddress targetAddress, int targetPort) {
 		// First of all, let's create a block counter and some other important variables
 		byte[] blockCounter = {0, 1};
 		ArrayList<Byte> respondDataBuilder;
@@ -444,7 +443,7 @@ public class TFTPCommons {
 		}
 	}
 
-	public static void sendError(int errorCode, DatagramSocket sendReceiveSocket, Boolean verboseMode, InetAddress address,
+	public static void sendError(int errorCode, SendReceiveSocket sendReceiveSocket, Boolean verboseMode, InetAddress address,
 			int port, String specialMessage) {
 		// Construct the message.
 		ArrayList<Byte> errorMessageBuilder = new ArrayList<Byte>();
@@ -497,7 +496,7 @@ public class TFTPCommons {
 		}
 	}
 	
-	public static void sendError(int errorCode, DatagramSocket sendReceiveSocket, Boolean verboseMode, InetAddress address,
+	public static void sendError(int errorCode, SendReceiveSocket sendReceiveSocket, Boolean verboseMode, InetAddress address,
 			int port) {
 		// This is a simpler version of sendError that eliminates the message argument
 		sendError(errorCode, sendReceiveSocket, verboseMode, address, port, "");
