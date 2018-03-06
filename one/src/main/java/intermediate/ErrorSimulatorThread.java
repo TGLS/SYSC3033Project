@@ -27,7 +27,7 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
-	private Boolean duplicatePacket = false, delayPacket = true, losePacket = false;
+	private Boolean duplicatePacket = false, delayPacket = false, losePacket = true;
 	
 	
 	// packet counters for all packet types simulation
@@ -61,7 +61,7 @@ public class ErrorSimulatorThread implements Runnable{
 		byte[] lastBlock = null;
 		
 		while(true) {
-
+			
 			
 			if(IntermediateControl.verboseMode) {
 				printRequest();
@@ -152,7 +152,6 @@ public class ErrorSimulatorThread implements Runnable{
 		}
 	//	System.out.println("Recieved a packet !" + receivePacket.getAddress().equals(clientAddress));
 		if(firstContact) {
-			System.out.println("First Contact!");
 			serverAddress = receivePacket.getAddress();
 			serverPort = receivePacket.getPort();
 			firstContact = false;
@@ -227,6 +226,20 @@ public class ErrorSimulatorThread implements Runnable{
 			System.exit(1);
 		}
 	}
+	
+	public void isError() {
+		//The purpose of this class is to watch the counters and the input data to ensure that we 
+		//Modify the correct packet
+		
+		
+		
+		
+		
+		
+		
+	}
+	
+	
 	
 	
 }
