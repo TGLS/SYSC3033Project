@@ -25,6 +25,7 @@ public class ErrorSimDelayThread implements Runnable {
 			System.out.print(e);
 		}
 		
+		System.out.println("The packet has been delayed by " + delay + "milisecconds");
 		errorSim.sendPacket(data);
 		
 

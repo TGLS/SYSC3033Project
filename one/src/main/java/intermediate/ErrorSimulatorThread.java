@@ -27,7 +27,7 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
-	private Boolean duplicatePacket = true, delayPacket = false, losePacket = false;
+	private Boolean duplicatePacket = false, delayPacket = true, losePacket = false;
 	
 	
 	// packet counters for all packet types simulation
@@ -184,24 +184,30 @@ public class ErrorSimulatorThread implements Runnable{
 		try {
 			 if(duplicatePacket) {
 				sendReceiveSocket.send(sendPacket);
+				
+				if(IntermediateControl.delay !=0) {
+					//delay by that amount
+				}
+				
 				sendReceiveSocket.send(sendPacket);
 				duplicatePacket = false; 
 				
 			 }else if(delayPacket) {
-				 // Delay the Packet 	 
-				 
+				 // Delay the Packet 	
+				 System.out.println("Delaying the Packet");
+				 //Create a delay thread to delay the packet
+				 Thread delayThread = new Thread(new ErrorSimDelayThread(IntermediateControl.delay, sendPacket, this));
+				 delayThread.start();
 				 delayPacket = false; 
 				 
 			 }else if(losePacket) {
-				 // don't do anything 
+				 // don't do anything
+				 System.out.println("A packet has been lost!");
 				 losePacket = false; 
 			 }else {
 				 // for now this is normal mode 
 				 sendReceiveSocket.send(sendPacket);	 
 			 }
-			
-			
-			sendReceiveSocket.send(sendPacket);
 		} catch (IOException e) {
 			// Print a stack trace, close all sockets and exit.
 			e.printStackTrace();
