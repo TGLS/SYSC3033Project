@@ -6,8 +6,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.DuplicateFormatFlagsException;
-
 import apps.TFTPCommons;
 
 /**
@@ -232,10 +230,28 @@ public class ErrorSimulatorThread implements Runnable{
 		//Modify the correct packet
 		
 		
-		
-		
-		
-		
+		//If mode is 0 no need to continue
+		if(!IntermediateControl.mode.equals("0")) {	
+			//Need to determine if were at the right packet // still need to add cases for wrq and rrq
+			if((IntermediateControl.packetType.equals("ack") && ackCounter == IntermediateControl.packetNumber) 
+			||( (IntermediateControl.packetType.equals("data") && dataCounter == IntermediateControl.packetNumber)) ){
+			
+				if(IntermediateControl.mode.equals("1")) {
+					//This is the drop packet case 
+					losePacket = true;
+				}	
+				if (IntermediateControl.mode.equals("2")) {
+					//Delay a packet 
+					delayPacket = true;
+					
+				}
+				if (IntermediateControl.mode.equals("3")) {
+					//Duplicate a packet
+					duplicatePacket = true;
+				}
+
+			}
+		}
 		
 	}
 	

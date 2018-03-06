@@ -85,7 +85,6 @@ public class ErrorSimRecieveThread implements Runnable{
 		Thread errorSimThread = new Thread(new ErrorSimulatorThread(receivePacket,destinationIP,destinationPort),"errorSimThread");
 		errorSimThread.start();
 		 activeThreads.add(errorSimThread);
-		
 	}
 	
 	private void shutdown() {
