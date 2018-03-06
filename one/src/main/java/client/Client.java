@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 
 import apps.OutOfDiskSpaceException;
+import apps.SendReceiveSocket;
 import apps.TFTPCommons;
 
 /**
@@ -22,7 +23,7 @@ import apps.TFTPCommons;
 public class Client {
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
-	private DatagramSocket sendReceiveSocket;
+	private SendReceiveSocket sendReceiveSocket;
 	private DatagramPacket sendPacket;
 	private byte[] sendData;
 	private InetAddress destinationAddress;
@@ -34,12 +35,8 @@ public class Client {
 		this.destinationPort = destinationPort;
 		try {
 			destinationAddress = InetAddress.getByName(destinationIP);
-			sendReceiveSocket = new DatagramSocket();
+			sendReceiveSocket = new SendReceiveSocket();
 		} catch (UnknownHostException e) {
-			// Print a stack trace and exit.
-			e.printStackTrace();
-			System.exit(1);
-		} catch (SocketException e) {
 			// Print a stack trace and exit.
 			e.printStackTrace();
 			System.exit(1);

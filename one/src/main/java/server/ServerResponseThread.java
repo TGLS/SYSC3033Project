@@ -5,13 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import apps.OutOfDiskSpaceException;
+import apps.SendReceiveSocket;
 import apps.TFTPCommons;
 
 /**
@@ -21,7 +20,7 @@ import apps.TFTPCommons;
  */
 
 public class ServerResponseThread implements Runnable {
-	private DatagramSocket sendReceiveSocket;
+	private SendReceiveSocket sendReceiveSocket;
 	private DatagramPacket receivePacket;
 	private byte[] receiveData;
 	private DatagramPacket sendPacket;
@@ -30,14 +29,7 @@ public class ServerResponseThread implements Runnable {
 	public ServerResponseThread(DatagramPacket receivePacket) {
 		this.receivePacket = receivePacket;
 		this.receiveData = receivePacket.getData();
-		try {
-			this.sendReceiveSocket = new DatagramSocket();
-		} catch (SocketException e) {
-			// Print a stack trace, close all sockets and exit.
-			e.printStackTrace();
-			sendReceiveSocket.close();
-			System.exit(1);
-		}
+		this.sendReceiveSocket = new SendReceiveSocket();
 	}
 	
 	public void run() {
