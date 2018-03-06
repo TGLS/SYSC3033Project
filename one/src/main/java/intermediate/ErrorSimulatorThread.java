@@ -31,13 +31,12 @@ public class ErrorSimulatorThread implements Runnable{
 	
 	
 	// packet counters for all packet types simulation
-	private int ackCounter =0;
-	private int wrqCounter =0;
-	private int rrqCounter =0;
+	private int ackCounter =0;  
+//  private int wrqCounter =0; Dont think I'll need these but I'll ask the TA tomorrow will only need them if run over multiple transfers
+//	private int rrqCounter =0;
 	private int dataCounter =0;
 	
 	public ErrorSimulatorThread(DatagramPacket receivePacket, String destinationIP, int destinationPort) {
-	
 		try {
 			sendReceiveSocket = new DatagramSocket();
 			serverAddress = InetAddress.getByName(destinationIP);
@@ -61,42 +60,9 @@ public class ErrorSimulatorThread implements Runnable{
 	public void run() {
 		byte[] lastBlock = null;
 		
-		
-		
 		while(true) {
+
 			
-			// need to put in the checks for the different error modes 
-			
-			if(IntermediateControl.mode =="00") {
-				// normal operation don't do anything 
-				
-			}
-			if(IntermediateControl.mode =="01") {
-				//loose a packet 
-				
-				// lets get somecounters going and if the counters match the paraaters dont send 
-				
-			}
-			if(IntermediateControl.mode =="02") {
-				
-				//delay packet 
-				//create a separate thread that will delay by a specified amount
-				// want the separate so that it will not block
-				
-				
-				
-			}
-			if(IntermediateControl.mode =="03") {
-				//duplicate a packet 
-				// when we get to the desired packet resend it again
-				
-				
-			}
-			
-			
-			
-			
-			System.out.println("beginning of the loop");
 			if(IntermediateControl.verboseMode) {
 				printRequest();
 			}
@@ -113,10 +79,20 @@ public class ErrorSimulatorThread implements Runnable{
 				if ((receiveData[0] == 0) & (receiveData[1] == 3)) {
 					// Set lastBlock properly.
 					lastBlock = new byte[] {receiveData[2], receiveData[3]};
+					//increase the data counter
+					
 				}
 			}
+			
+			//if we get a regular data packet increase the counter 
+			if ((receivePacket.getLength() < TFTPCommons.max_buffer) & (receivePacket.getLength() >= 4)) {
+				dataCounter ++;
+			}
+			
+			
 			// If we receive an acknowledge packet
 			if (receivePacket.getLength() ==  4) {
+				ackCounter++;
 				if ((receiveData[0] == 0) & (receiveData[1] == 4)) {
 					// And it matches block number with the previous value
 					if (lastBlock != null) {
@@ -126,16 +102,18 @@ public class ErrorSimulatorThread implements Runnable{
 						}
 					}
 				}
+			
 			}
+			
 			// If we receive a error packet
 			if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
 				// Kill the thread. Error packets are Terminal
 				break;
 			}
 			
+			
 			receivePacket(); 
 		}
-		System.out.println("Problem");
 		sendReceiveSocket.close();
 	}
 
@@ -179,7 +157,6 @@ public class ErrorSimulatorThread implements Runnable{
 			serverPort = receivePacket.getPort();
 			firstContact = false;
 		}
-		System.out.println("Recieved a packet 2 !");
 		
 	}
 	
@@ -210,9 +187,8 @@ public class ErrorSimulatorThread implements Runnable{
 				sendReceiveSocket.send(sendPacket);
 				duplicatePacket = false; 
 				
-				
 			 }else if(delayPacket) {
-				 // Delay the Packet 
+				 // Delay the Packet 	 
 				 
 				 delayPacket = false; 
 				 
@@ -221,12 +197,9 @@ public class ErrorSimulatorThread implements Runnable{
 				 losePacket = false; 
 			 }else {
 				 // for now this is normal mode 
-				 sendReceiveSocket.send(sendPacket);
-				 
+				 sendReceiveSocket.send(sendPacket);	 
 			 }
 			
-			
-		
 			
 			sendReceiveSocket.send(sendPacket);
 		} catch (IOException e) {

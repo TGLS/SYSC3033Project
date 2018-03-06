@@ -11,6 +11,6 @@ public class IntermediateControl {
 	static String packetType = ""; 
 	static int packetNumber ;
 	static int specification ;
-
+	
 	public IntermediateControl(){}
 }
