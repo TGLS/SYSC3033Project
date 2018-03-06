@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.DuplicateFormatFlagsException;
 
 import apps.TFTPCommons;
 
@@ -26,11 +27,14 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
-	// packet counters for error simulation
-	//private int ackCounter =0;
-	//private int wrqCounter =0;
-	//private int rrqCounter =0;
-	//private int dataCounter =0;
+	private Boolean duplicatePacket = true, delayPacket = false, losePacket = false;
+	
+	
+	// packet counters for all packet types simulation
+	private int ackCounter =0;
+	private int wrqCounter =0;
+	private int rrqCounter =0;
+	private int dataCounter =0;
 	
 	public ErrorSimulatorThread(DatagramPacket receivePacket, String destinationIP, int destinationPort) {
 	
@@ -56,6 +60,8 @@ public class ErrorSimulatorThread implements Runnable{
 	
 	public void run() {
 		byte[] lastBlock = null;
+		
+		
 		
 		while(true) {
 			
@@ -86,11 +92,6 @@ public class ErrorSimulatorThread implements Runnable{
 				
 				
 			}
-			
-			
-			
-			
-			
 			
 			
 			
@@ -204,6 +205,29 @@ public class ErrorSimulatorThread implements Runnable{
 	private void sendPacket() {
 		// Here, we're going to use the sendReceiveSocket to send the 
 		try {
+			 if(duplicatePacket) {
+				sendReceiveSocket.send(sendPacket);
+				sendReceiveSocket.send(sendPacket);
+				duplicatePacket = false; 
+				
+				
+			 }else if(delayPacket) {
+				 // Delay the Packet 
+				 
+				 delayPacket = false; 
+				 
+			 }else if(losePacket) {
+				 // don't do anything 
+				 losePacket = false; 
+			 }else {
+				 // for now this is normal mode 
+				 sendReceiveSocket.send(sendPacket);
+				 
+			 }
+			
+			
+		
+			
 			sendReceiveSocket.send(sendPacket);
 		} catch (IOException e) {
 			// Print a stack trace, close all sockets and exit.
