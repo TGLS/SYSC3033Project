@@ -59,6 +59,42 @@ public class ErrorSimulatorThread implements Runnable{
 		
 		while(true) {
 			
+			// need to put in the checks for the different error modes 
+			
+			if(IntermediateControl.mode =="00") {
+				// normal operation don't do anything 
+				
+			}
+			if(IntermediateControl.mode =="01") {
+				//loose a packet 
+				
+				// lets get somecounters going and if the counters match the paraaters dont send 
+				
+			}
+			if(IntermediateControl.mode =="02") {
+				
+				//delay packet 
+				//create a separate thread that will delay by a specified amount
+				// want the separate so that it will not block
+				
+				
+				
+			}
+			if(IntermediateControl.mode =="03") {
+				//duplicate a packet 
+				// when we get to the desired packet resend it again
+				
+				
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
 			System.out.println("beginning of the loop");
 			if(IntermediateControl.verboseMode) {
 				printRequest();
@@ -166,6 +202,18 @@ public class ErrorSimulatorThread implements Runnable{
 	}
 	
 	private void sendPacket() {
+		// Here, we're going to use the sendReceiveSocket to send the 
+		try {
+			sendReceiveSocket.send(sendPacket);
+		} catch (IOException e) {
+			// Print a stack trace, close all sockets and exit.
+			e.printStackTrace();
+			sendReceiveSocket.close();
+			System.exit(1);
+		}
+	}
+	
+	public void sendPacket(DatagramPacket sendPacket) {
 		// Here, we're going to use the sendReceiveSocket to send the 
 		try {
 			sendReceiveSocket.send(sendPacket);
