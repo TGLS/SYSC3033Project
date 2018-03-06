@@ -1,18 +1,22 @@
 package intermediate;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+
+import apps.TFTPCommons;
 
 public class ErrorSimDelayThread implements Runnable {
 	int delay;
 	DatagramPacket data;
-	ErrorSimulatorThread errorSim; 
+	DatagramSocket SendSocket; 
 	
 	
-	public ErrorSimDelayThread (int delay, DatagramPacket data, ErrorSimulatorThread errorSim ) {
+	public ErrorSimDelayThread (int delay, DatagramPacket data, DatagramSocket Socket) {
 		//take in the given variables and set local
 		this.delay = delay;
 		this.data = data; 
-		this.errorSim = errorSim;
+		this.SendSocket = Socket;
 	}
 	
 
@@ -25,8 +29,21 @@ public class ErrorSimDelayThread implements Runnable {
 			System.out.print(e);
 		}
 		
-		System.out.println("The packet has been delayed by " + delay + "milisecconds");
-		errorSim.sendPacket(data);
+		TFTPCommons.printMessage(true, data.getData(), data.getLength());
+		
+		
+		try {
+			
+			System.out.println("Transmit");
+			SendSocket.send(data);
+		} catch (IOException e) {
+			// Print a stack trace, close all sockets and exit.
+			e.printStackTrace();
+			SendSocket.close();
+			System.exit(1);
+		}
+		
+		IntermediateControl.canClose =true; 
 		
 
 	}
