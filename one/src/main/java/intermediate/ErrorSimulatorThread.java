@@ -6,7 +6,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-
 import apps.TFTPCommons;
 
 /**
@@ -26,14 +25,16 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
-	// packet counters for error simulation
-	//private int ackCounter =0;
-	//private int wrqCounter =0;
-	//private int rrqCounter =0;
-	//private int dataCounter =0;
+	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false;
+	
+	
+	// packet counters for all packet types simulation
+	private int ackCounter =0;  
+//  private int wrqCounter =0; Dont think I'll need these but I'll ask the TA tomorrow will only need them if run over multiple transfers
+//	private int rrqCounter =0;
+	private int dataCounter =0; // starting at -1 as rrq/wrq is read as a data packet
 	
 	public ErrorSimulatorThread(DatagramPacket receivePacket, String destinationIP, int destinationPort) {
-	
 		try {
 			sendReceiveSocket = new DatagramSocket();
 			serverAddress = InetAddress.getByName(destinationIP);
@@ -56,28 +57,48 @@ public class ErrorSimulatorThread implements Runnable{
 	
 	public void run() {
 		byte[] lastBlock = null;
-		
 		while(true) {
 			
-			System.out.println("beginning of the loop");
 			if(IntermediateControl.verboseMode) {
 				printRequest();
 			}
 			formSendPacket();
 			
-			if(IntermediateControl.verboseMode) {
-				reprintRequest();
+			
+			// Check to see if we need to modify this packet 
+		
+			
+			if (receiveData[1] == 4) {
+				ackCounter++;
+				System.out.println("incrementing the ack");
 			}
 			
+			//if we get a regular data packet increase the counter 
+			if (receiveData[1] ==3) {
+				System.out.println("incrementing the data");
+				dataCounter ++;
+			}
+			
+			isError();
+			
+			
 			sendPacket();
+			
+			
+			
 			// If we receive a non-full length packet,
 			if ((receivePacket.getLength() < TFTPCommons.max_buffer) & (receivePacket.getLength() >= 4)) {
 				// And it's a Data packet
 				if ((receiveData[0] == 0) & (receiveData[1] == 3)) {
 					// Set lastBlock properly.
 					lastBlock = new byte[] {receiveData[2], receiveData[3]};
+					//increase the data counter
+					
 				}
 			}
+			
+		
+			
 			// If we receive an acknowledge packet
 			if (receivePacket.getLength() ==  4) {
 				if ((receiveData[0] == 0) & (receiveData[1] == 4)) {
@@ -89,17 +110,25 @@ public class ErrorSimulatorThread implements Runnable{
 						}
 					}
 				}
+			
 			}
+			
 			// If we receive a error packet
 			if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
 				// Kill the thread. Error packets are Terminal
 				break;
 			}
 			
+			
 			receivePacket(); 
 		}
-		System.out.println("Problem");
-		sendReceiveSocket.close();
+		
+		System.out.println("Closing the socket");
+		while(!IntermediateControl.canClose) {
+			
+		}
+			sendReceiveSocket.close();
+		
 	}
 
 	
@@ -137,12 +166,10 @@ public class ErrorSimulatorThread implements Runnable{
 		}
 	//	System.out.println("Recieved a packet !" + receivePacket.getAddress().equals(clientAddress));
 		if(firstContact) {
-			System.out.println("First Contact!");
 			serverAddress = receivePacket.getAddress();
 			serverPort = receivePacket.getPort();
 			firstContact = false;
 		}
-		System.out.println("Recieved a packet 2 !");
 		
 	}
 	
@@ -154,7 +181,6 @@ public class ErrorSimulatorThread implements Runnable{
 		
 		// if the receivePacket address is the client send to the sever 
 		if(receivePacket.getAddress().equals(clientAddress) && receivePacket.getPort() == clientPort) {
-			System.out.println("Sending to the Server !");
 			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), serverAddress,
 					serverPort);
 			
@@ -168,7 +194,44 @@ public class ErrorSimulatorThread implements Runnable{
 	private void sendPacket() {
 		// Here, we're going to use the sendReceiveSocket to send the 
 		try {
-			sendReceiveSocket.send(sendPacket);
+			 if(duplicatePacket) {
+				 
+				 if(IntermediateControl.verboseMode) {
+						reprintRequest();
+				}
+				sendReceiveSocket.send(sendPacket);
+				
+				if(IntermediateControl.delay !=0) {
+					 Thread delayThread = new Thread(new ErrorSimDelayThread(IntermediateControl.delay, sendPacket, sendReceiveSocket));
+					 delayThread.start();
+				}else {
+					if(IntermediateControl.verboseMode) {
+						reprintRequest();
+					}
+					sendReceiveSocket.send(sendPacket);
+				}
+				
+				duplicatePacket = false; 
+				
+			 }else if(delayPacket) {
+				 // Delay the Packet 	
+				 System.out.println("Delaying the Packet");
+				 //Create a delay thread to delay the packet
+				 Thread delayThread = new Thread(new ErrorSimDelayThread(IntermediateControl.delay, sendPacket, sendReceiveSocket));
+				 delayThread.start();
+				 delayPacket = false; 
+				 
+			 }else if(losePacket) {
+				 // don't do anything
+				 System.out.println("A packet has been dropped!");
+				 losePacket = false; 
+			 }else {
+				 if(IntermediateControl.verboseMode) {
+						reprintRequest();
+				}
+				 // for now this is normal mode 
+				 sendReceiveSocket.send(sendPacket);	 
+			 }
 		} catch (IOException e) {
 			// Print a stack trace, close all sockets and exit.
 			e.printStackTrace();
@@ -176,6 +239,48 @@ public class ErrorSimulatorThread implements Runnable{
 			System.exit(1);
 		}
 	}
-	
+
+	public void isError() {
+		//The purpose of this class is to watch the counters and the input data to ensure that we 
+		//Modify the correct packet
+		
+		//If mode is 0 no need to continue
+		if(!IntermediateControl.mode.equals("0")) {	
+			System.out.println("Before" + IntermediateControl.mode + " " + ackCounter + " " + dataCounter);
+			//Need to determine if were at the right packet // still need to add cases for wrq and rrq
+			if((IntermediateControl.packetType.equals("ack") && ackCounter == IntermediateControl.packetNumber) 
+			||((IntermediateControl.packetType.equals("data") && dataCounter == IntermediateControl.packetNumber))
+			||((IntermediateControl.packetType.equals("wrq")|IntermediateControl.packetType.equals("rrq")) && (ackCounter==0 && dataCounter ==0))){
+				System.out.println("Made it past");
+				
+		
+				
+				System.out.println("After" + IntermediateControl.mode + " " + ackCounter + " " + dataCounter);
+				
+				if(IntermediateControl.mode.equals("1")) {
+					//This is the drop packet case 
+					System.out.println("Trying to drop the packet");
+					losePacket = true;
+				}	
+				if (IntermediateControl.mode.equals("2")) {
+					//Delay a packet 
+					System.out.println("Try Delaying the packet");
+					delayPacket = true;
+					IntermediateControl.canClose =false;
+				}
+				if (IntermediateControl.mode.equals("3")) {
+					//Duplicate a packet
+					System.out.println("Creating Duplicates");
+					duplicatePacket = true;
+					IntermediateControl.canClose =false;
+				}
+				
+				IntermediateControl.packetType = "";
+				IntermediateControl.mode = "0";
+				
+			}
+		}
+		
+	}
 	
 }

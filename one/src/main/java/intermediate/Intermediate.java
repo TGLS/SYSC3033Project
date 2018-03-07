@@ -74,10 +74,10 @@ public class Intermediate {
 				String mode = "";
 				String packetType =""; 
 				int packetNumber ;
-				int specification; 
+				int delay; 
 				
 				//ensure that packet type is valid
-				if(commandParts[1].equals("00")|commandParts[1].equals("01")|commandParts[1].equals("02")|commandParts[1].equals("03") && commandParts.length ==5 ) {
+				if(commandParts[1].equals("0")|commandParts[1].equals("1")|commandParts[1].equals("2")|commandParts[1].equals("3") && commandParts.length ==5 ) {
 					mode = commandParts[1]; 
 					
 					
@@ -93,12 +93,12 @@ public class Intermediate {
 							// now need to validate the transferData example delay, number of duplications ... ect
 							if((commandParts[4].matches("[0-9]+"))){
 								System.out.println("In here5");
-								specification = Integer.parseInt(commandParts[4]);
+								delay = Integer.parseInt(commandParts[4]);
 								// if we get to here we have a valid imput 
 								IntermediateControl.mode = mode; 
 								IntermediateControl.packetType = packetType;
 								IntermediateControl.packetNumber = packetNumber; 
-								IntermediateControl.specification = specification;
+								IntermediateControl.delay = delay;
 								
 							}else {
 								System.out.println("there is an error in your mode formating please try again ensure your SPECIFICATION is valid");

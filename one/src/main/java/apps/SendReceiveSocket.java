@@ -12,6 +12,7 @@ import java.net.SocketTimeoutException;
  * and it will attempt to resend on timeout (locked at 1000 ms)
  */
 
+
 public class SendReceiveSocket {
 	private DatagramSocket socket;
 	private DatagramPacket previousPacket;
@@ -49,6 +50,7 @@ public class SendReceiveSocket {
 				}
 			}
 		}
+		System.out.println("We got a Packet!"); 
 	}
 
 	public void close() {
