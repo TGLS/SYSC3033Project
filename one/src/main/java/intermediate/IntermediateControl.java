@@ -8,9 +8,9 @@ public class IntermediateControl {
 	static Boolean IntermediateStop = false;
 	static Boolean verboseMode = false; 
 	static Boolean canClose = true;
-	static String mode = "3"; // default to the basic 
-	static String packetType = "data"; 
-	static int packetNumber = 2;
-	static int delay = 500;
+	static String mode = "0"; // default to the basic 
+	static String packetType = ""; 
+	static int packetNumber;
+	static int delay;
 	public IntermediateControl(){}
 }

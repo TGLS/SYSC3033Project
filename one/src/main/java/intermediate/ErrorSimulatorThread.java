@@ -70,12 +70,10 @@ public class ErrorSimulatorThread implements Runnable{
 			
 			if (receiveData[1] == 4) {
 				ackCounter++;
-				System.out.println("incrementing the ack");
 			}
 			
 			//if we get a regular data packet increase the counter 
 			if (receiveData[1] ==3) {
-				System.out.println("incrementing the data");
 				dataCounter ++;
 			}
 			
@@ -122,8 +120,6 @@ public class ErrorSimulatorThread implements Runnable{
 			
 			receivePacket(); 
 		}
-		
-		System.out.println("Closing the socket");
 		while(!IntermediateControl.canClose) {
 			
 		}
@@ -164,7 +160,6 @@ public class ErrorSimulatorThread implements Runnable{
 			sendReceiveSocket.close();
 			System.exit(1);
 		}
-	//	System.out.println("Recieved a packet !" + receivePacket.getAddress().equals(clientAddress));
 		if(firstContact) {
 			serverAddress = receivePacket.getAddress();
 			serverPort = receivePacket.getPort();
@@ -215,7 +210,7 @@ public class ErrorSimulatorThread implements Runnable{
 				
 			 }else if(delayPacket) {
 				 // Delay the Packet 	
-				 System.out.println("Delaying the Packet");
+				 System.out.println("A Packet has been Delayed");
 				 //Create a delay thread to delay the packet
 				 Thread delayThread = new Thread(new ErrorSimDelayThread(IntermediateControl.delay, sendPacket, sendReceiveSocket));
 				 delayThread.start();
@@ -246,31 +241,23 @@ public class ErrorSimulatorThread implements Runnable{
 		
 		//If mode is 0 no need to continue
 		if(!IntermediateControl.mode.equals("0")) {	
-			System.out.println("Before" + IntermediateControl.mode + " " + ackCounter + " " + dataCounter);
 			//Need to determine if were at the right packet // still need to add cases for wrq and rrq
 			if((IntermediateControl.packetType.equals("ack") && ackCounter == IntermediateControl.packetNumber) 
 			||((IntermediateControl.packetType.equals("data") && dataCounter == IntermediateControl.packetNumber))
 			||((IntermediateControl.packetType.equals("wrq")|IntermediateControl.packetType.equals("rrq")) && (ackCounter==0 && dataCounter ==0))){
-				System.out.println("Made it past");
-				
-		
-				
-				System.out.println("After" + IntermediateControl.mode + " " + ackCounter + " " + dataCounter);
 				
 				if(IntermediateControl.mode.equals("1")) {
 					//This is the drop packet case 
-					System.out.println("Trying to drop the packet");
 					losePacket = true;
 				}	
 				if (IntermediateControl.mode.equals("2")) {
 					//Delay a packet 
-					System.out.println("Try Delaying the packet");
 					delayPacket = true;
 					IntermediateControl.canClose =false;
 				}
 				if (IntermediateControl.mode.equals("3")) {
 					//Duplicate a packet
-					System.out.println("Creating Duplicates");
+					System.out.println("Creating Duplicate Packets");
 					duplicatePacket = true;
 					IntermediateControl.canClose =false;
 				}
