@@ -20,7 +20,7 @@ public class SendReceiveSocket {
 	public SendReceiveSocket() {
 		try {
 			socket = new DatagramSocket();
-			socket.setSoTimeout(1000);
+			socket.setSoTimeout(5000);
 			previousPacket = null;
 		} catch (SocketException e) {
 			// Print a stack trace and exit.
@@ -31,13 +31,11 @@ public class SendReceiveSocket {
 	}
 
 	public void receive(DatagramPacket receivePacket, boolean verbose) throws IOException {
-		// Until we receive a 
+		// Until we receive a packet 
 		while (true) {
 			try {
-		
 				// Attempt to receive a packet.
 				socket.receive(receivePacket);
-				
 				// After we successfully received a packet, break
 				break;
 			} catch (SocketTimeoutException e) {
@@ -50,7 +48,6 @@ public class SendReceiveSocket {
 				}
 			}
 		}
-		System.out.println("We got a Packet!"); 
 	}
 
 	public void close() {

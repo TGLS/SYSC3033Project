@@ -264,6 +264,23 @@ public class TFTPCommons {
 					return false;
 				}
 				
+				// If we get the previous data packet, respond the previous ACK
+				if ((receiveData[0] == 0) & (receiveData[1] == 3) &
+						(receiveData[2] == blockCounter[0]) &
+						(receiveData[3] == blockCounter[1] - 1)) {
+					// Then we respond with an acknowledge.
+					respondData = new byte[] {0, 4, blockCounter[0], (byte) (blockCounter[1] - 1)};
+					respondPacket = new DatagramPacket(respondData, 4, receivePacket.getAddress(),
+							receivePacket.getPort());
+					
+					// Print response if we're being verbose
+					if (verbose) {
+						printMessage(true, respondData, respondPacket.getLength());
+					}
+					
+					sendReceiveSocket.send(respondPacket);
+				}
+				
 				// Check if it's a data packet
 				// And whether if its block counter matches
 				if (receivePacket.getLength() >= 4) {
@@ -315,23 +332,6 @@ public class TFTPCommons {
 						if (receivePacket.getLength() < 516) {
 							break;
 						}
-					}
-					
-					// If we get the previous data packet, respond the previous ACK
-					if ((receiveData[0] == 0) & (receiveData[1] == 3) &
-							(receiveData[2] == blockCounter[0]) &
-							(receiveData[3] == blockCounter[1] - 1)) {
-						// Then we respond with an acknowledge.
-						respondData = new byte[] {0, 4, blockCounter[0], (byte) (blockCounter[1] - 1)};
-						respondPacket = new DatagramPacket(respondData, 4, receivePacket.getAddress(),
-								receivePacket.getPort());
-						
-						// Print response if we're being verbose
-						if (verbose) {
-							printMessage(true, respondData, respondPacket.getLength());
-						}
-						
-						sendReceiveSocket.send(respondPacket);
 					}
 				}
 			}
