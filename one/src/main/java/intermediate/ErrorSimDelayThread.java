@@ -33,8 +33,6 @@ public class ErrorSimDelayThread implements Runnable {
 		
 		
 		try {
-			
-			System.out.println("Transmit");
 			SendSocket.send(data);
 		} catch (IOException e) {
 			// Print a stack trace, close all sockets and exit.
