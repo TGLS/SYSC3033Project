@@ -71,7 +71,7 @@ public class Intermediate {
 				
 			// here we wan to be able to enter error modes	
 			//format of command:  mode [00][01][02][03][04]	Packet_type packet_number;
-			}else if(commandParts[0].equals("mode")){
+			}else if(commandParts[0].equals("mode") && commandParts.length >=2 ){
 				// now we need to validate the string format modes 
 				String mode = "";
 				String packetType =""; 
@@ -97,7 +97,7 @@ public class Intermediate {
 											delay = Integer.parseInt(commandParts[4]);
 										}else {
 											valid = false; 
-											System.out.println("there is an error in your mode formating, please try again ensure your Delay is valid");
+											System.out.println("there is an error in your mode formating, please try again ensure your DELAY is valid");
 										}
 											
 									}else {
@@ -115,7 +115,7 @@ public class Intermediate {
 								}
 	
 							}catch(Exception exp) {
-								System.out.println("there is an error in your mode formating, please try again ensure your Packet_Number and DURATION are valid");
+								System.out.println("there is an error in your mode formating, please try again ensure your Packet_Number and DELAY are valid");
 								valid =false;
 							}
 						}else {
@@ -165,14 +165,15 @@ public class Intermediate {
 	}
 	
 	private void printMenue() {
+		
 		System.out.print("\nPlease Enter one of the following commands \n"
 				+ "verbose \n"
 				+ "quiet \n"
-				+ "Error Packet format: mode Error_Type Packet_Type [Packet_Number] [Duration] \n"
+				+ "Error Packet format: mode Error_Type Packet_Type [Packet_Number] [Delay] \n"
 				+ "For normal Operation:  mode 0\n"
 				+ "To loose a Packet:     mode 1 [ack][data] packet# \n"
-				+ "To Delay a Packet:     mode 2 [ack][data] packet# duration \n"
-				+ "To duplicate a packet: mode 3 [ack][data] packet# duration\n"
+				+ "To Delay a Packet:     mode 2 [ack][data] packet# delay \n"
+				+ "To duplicate a packet: mode 3 [ack][data] packet# delay\n"
 				+ "\n");
 		
 	}
