@@ -229,6 +229,10 @@ public class ErrorSimulatorThread implements Runnable{
 				 // create an error socket 
 				 DatagramSocket errorSocket = new DatagramSocket();
 				 
+				if(IntermediateControl.verboseMode) {
+					reprintRequest();
+				}
+				
 				 //send the packet using the new socket 
 				 errorSocket.send(sendPacket);
 			 
@@ -251,7 +255,9 @@ public class ErrorSimulatorThread implements Runnable{
 				errorSocket.close();
 				
 				// for now just print out the message on the packet should be the error code 
-				System.out.println(receivePacket.getData());
+				if(IntermediateControl.verboseMode) {
+					printRequest();
+				}
 				unknownTID = false;
 				
 				// After this point the client will timeout 
