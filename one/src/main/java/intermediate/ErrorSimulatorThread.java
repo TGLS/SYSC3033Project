@@ -25,7 +25,7 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
-	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false;
+	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false, illegalTFTP = false, unknownTID = false ;
 	
 	
 	// packet counters for all packet types simulation
@@ -78,7 +78,6 @@ public class ErrorSimulatorThread implements Runnable{
 			}
 			
 			isError();
-			
 			
 			sendPacket();
 			
@@ -178,6 +177,8 @@ public class ErrorSimulatorThread implements Runnable{
 		if(receivePacket.getAddress().equals(clientAddress) && receivePacket.getPort() == clientPort) {
 			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), serverAddress,
 					serverPort);
+		
+			
 			
 		}else {
 			// if not send to the client 
@@ -220,6 +221,41 @@ public class ErrorSimulatorThread implements Runnable{
 				 // don't do anything
 				 System.out.println("A packet has been dropped!");
 				 losePacket = false; 
+			 
+			 
+			 }else if (unknownTID) {
+				 // THis will simulate an illegal Tid being sent to the server/client 
+					System.out.println("Simulating a");
+				 // create an error socket 
+				 DatagramSocket errorSocket = new DatagramSocket();
+				 
+				 //send the packet using the new socket 
+				 errorSocket.send(sendPacket);
+			 
+				 //wait to receive the error message
+				 receiveData = new byte[TFTPCommons.max_buffer];
+					
+					// Create a packet for the incoming packet.
+				receivePacket = new DatagramPacket(receiveData, receiveData.length);
+					
+					// Receive a message from the reception socket.
+					// Surrounded with try-catch because receiving a message might fail.
+				try {
+					errorSocket.receive(receivePacket);
+				} catch (IOException e) {
+					// Print a stack trace, close the socket, and exit.
+					e.printStackTrace();
+					errorSocket.close();
+					System.exit(1);
+				}
+				errorSocket.close();
+				
+				// for now just print out the message on the packet should be the error code 
+				System.out.println(receivePacket.getData());
+				unknownTID = false;
+				
+				// After this point the client will timeout 
+			 
 			 }else {
 				 if(IntermediateControl.verboseMode) {
 						reprintRequest();
@@ -260,6 +296,36 @@ public class ErrorSimulatorThread implements Runnable{
 					System.out.println("Creating Duplicate Packets");
 					duplicatePacket = true;
 					IntermediateControl.canClose =false;
+				}
+				if (IntermediateControl.mode.equals("4")) {
+					// this will simulate Illegal TFTP operation.
+					//junk the op code 
+					//junk the counter for datas/acks
+					//junk the mode for requests 
+					// choose the packet same as before 
+					
+					illegalTFTP = true; 
+					
+					
+				}
+				if (IntermediateControl.mode.equals("5")) {
+					//This will simulate Unknown transfer ID.
+					//change source IP
+					// change source port 
+					//or both 
+					// accept ip port
+					// choose the packet same as before 
+				
+					// create a new socket send the packet to the server 
+					// wait of the error response 
+					// print the response 
+					// close the socket 
+					
+					unknownTID = true;
+					
+					
+					
+					
 				}
 				
 				IntermediateControl.packetType = "";
