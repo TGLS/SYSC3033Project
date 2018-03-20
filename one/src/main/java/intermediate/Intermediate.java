@@ -101,7 +101,7 @@ public class Intermediate {
 										}
 											
 									}else {
-										if(!commandParts[1].equals("1")) {
+										if(!commandParts[1].equals("1") || !commandParts[1].equals("4") || !commandParts[1].equals("5")) {
 											valid = false; 
 											System.out.println("there is an error in your mode formating, please try again ensure your Packet_Number is valid");
 										}
@@ -174,6 +174,8 @@ public class Intermediate {
 				+ "To loose a Packet:     mode 1 [ack][data] packet# \n"
 				+ "To Delay a Packet:     mode 2 [ack][data] packet# delay \n"
 				+ "To duplicate a packet: mode 3 [ack][data] packet# delay\n"
+				+ "To duplicate a packet: mode 4 [ack][data] packet# delay\n"
+				+ "TFTP TID error:        mode 5 [ack][data] packet# \n"
 				+ "\n");
 		
 	}

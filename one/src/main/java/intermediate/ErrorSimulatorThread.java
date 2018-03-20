@@ -25,7 +25,7 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
-	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false, illegalTFTP = false, unknownTID = false ;
+	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false, illegalTFTPOpcode = false, unknownTID = false ;
 	
 	
 	// packet counters for all packet types simulation
@@ -310,7 +310,7 @@ public class ErrorSimulatorThread implements Runnable{
 					//junk the mode for requests 
 					// choose the packet same as before 
 					
-					illegalTFTP = true; 
+					illegalTFTPOpcode = true; 
 					
 					
 				}
