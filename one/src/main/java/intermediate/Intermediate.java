@@ -74,75 +74,160 @@ public class Intermediate {
 			}else if(commandParts[0].equals("mode") && commandParts.length >=2 ){
 				// now we need to validate the string format modes 
 				String mode = "";
+				
 				String packetType =""; 
 				int packetNumber =0;
 				int delay = 0; 
 				boolean valid = true;
+				
+				int MODE;
 				//ensure that packet type is valid
-				if(commandParts[1].equals("0")|commandParts[1].equals("1")|commandParts[1].equals("2")|commandParts[1].equals("3")) {
-					mode = commandParts[1]; 
-					if((commandParts[1].equals("1") || commandParts[1].equals("2") || commandParts[1].equals("3")) && commandParts.length >2) {
-						if( commandParts[2].equals("ack") || commandParts[2].equals("data")) {		
-							//Set the packet type to look for 
+				if(valInt(commandParts[1])) {
+					MODE = Integer.parseInt(commandParts[1]);
+				}else {
+					MODE = 99;
+				}
+				
+				int len = commandParts.length;
+				
+				switch(MODE) {
+				
+				case 0:
+					if(!(len ==2)) {
+						System.out.println("normal Operation must only contain  mode 0");
+						valid = false;
+					}else {
+						mode = commandParts[1];
+					}
+					break;
+					
+				case 1:
+					// Drop a packet format :  mode 1 [ack][data] packet#
+					if(len == 4) {
+						mode = commandParts[1];
+						// validate the packet type
+						if(validPacket(commandParts[2])) {
 							packetType = commandParts[2];
-							try {
-								//modes 1,2,3 all need packet number 
-								if(commandParts[3].matches("[0-9]+")) {
-									//set the packet number
-									packetNumber = Integer.parseInt(commandParts[3]);
-									
-									// if mode is 3 or 4 need a length of 5
-									if(commandParts.length == 5){
-										if(commandParts[3].matches("[0-9]+")) {
-											delay = Integer.parseInt(commandParts[4]);
-										}else {
-											valid = false; 
-											System.out.println("there is an error in your mode formating, please try again ensure your DELAY is valid");
-										}
-											
-									}else {
-										if(!commandParts[1].equals("1") || !commandParts[1].equals("4") || !commandParts[1].equals("5")) {
-											valid = false; 
-											System.out.println("there is an error in your mode formating, please try again ensure your Packet_Number is valid");
-										}
-
-									}
-									
-								}else {
-									
-									System.out.println("there is an error in your mode formating, please try again ensure your Packet_Number is valid");
-									valid = false;
-								}
-	
-							}catch(Exception exp) {
-								System.out.println("there is an error in your mode formating, please try again ensure your Packet_Number and DELAY are valid");
-								valid =false;
+							//validate the packet number 
+							if(valInt(commandParts[3])) {
+								packetNumber = Integer.parseInt(commandParts[3]);
+							}else {
+								System.out.println("Invalid packet number");
+								valid = false;
 							}
 						}else {
-							System.out.println("there is an error in your mode formating, please try again ensure your PACKET_TYPE is valid");
-							valid =false;
-							
+							valid = false; 
 						}
 					}else {
-						// allow mode = 0 to make it to the end
-						if(!commandParts[1].equals("0")) {
-							valid = false; 
-							System.out.println("there is an error in your mode formating, please try again ensure your MODE is valid");
-						}
+						System.out.println("drop packet must have 4 componants:   mode 1 [ack][data] packet# ");
+						valid = false; 
 					}
-
-					if(valid) {
-						IntermediateControl.mode = mode; 
-						IntermediateControl.packetType = packetType;
-						IntermediateControl.packetNumber = packetNumber; 
-						IntermediateControl.delay = delay;
-						System.out.println("You have set Mode  : " + mode + " Packet Type: " + packetType + " Packet# " +  packetNumber + " Delay: " + delay);
-		
-					}
+	
 					
-				}else {
+					break;
+				
+				case 2:
+					if(len == 5) {
+						mode = commandParts[1];
+						// validate the packet type
+						if(validPacket(commandParts[2])) {
+							packetType = commandParts[2];
+							//validate the packet number 
+							if(valInt(commandParts[3])) {
+								packetNumber = Integer.parseInt(commandParts[3]);
+								//validate the Delay 
+								if(valInt(commandParts[4])) {
+									delay = Integer.parseInt(commandParts[4]);
+								}else {
+									valid = false; 
+									System.out.println("there is an error in your mode formating, please try again ensure your DELAY is valid");
+								}
+							}else {
+								System.out.println("Invalid packet number");
+								valid = false;
+							}
+						}else {
+							valid = false; 
+						}
+					}else {
+						System.out.println("loose packet must have 5 componants:  mode 2 [ack][data] packet# delay  ");
+						valid = false; 
+					}
+					break;
+				case 3:
+					if(len == 5) {
+						mode = commandParts[1];
+						// validate the packet type
+						if(validPacket(commandParts[2])) {
+							packetType = commandParts[2];
+							//validate the packet number 
+							if(valInt(commandParts[3])) {
+								packetNumber = Integer.parseInt(commandParts[3]);
+								//validate the Delay number 
+								if(valInt(commandParts[4])) {
+									delay = Integer.parseInt(commandParts[4]);
+								}else {
+									valid = false; 
+									System.out.println("there is an error in your mode formating, please try again ensure your DELAY is valid");
+								}
+							}else {
+								System.out.println("Invalid packet number");
+								valid = false;
+							}
+						}else {
+							valid = false; 
+						}
+					}else {
+						System.out.println("loose packet must have 5 componants:  mode 3 [ack][data] packet# delay  ");
+						valid = false; 
+					}
+					break;
+				case 4:
+					System.out.println("Work in progress");
+					break;
+				case 5:
+					System.out.println("Work in progress");
+					break;
+					
+				case 6:
+					System.out.println("Work in progress");
+					break;
+				case 7:
+					// invalid TID :  mode 7 [ack][data] packet#
+					if(len == 4) {
+						mode = commandParts[1];
+						// validate the packet type
+						if(validPacket(commandParts[2])) {
+							packetType = commandParts[2];
+							//validate the packet number 
+							if(valInt(commandParts[3])) {
+								packetNumber = Integer.parseInt(commandParts[3]);
+							}else {
+								System.out.println("Invalid packet number");
+								valid = false;
+							}
+						}else {
+							valid = false; 
+						}
+					}else {
+						System.out.println("TFTP TID error must have 4 componants:   mode 7 [ack][data] packet# ");
+						valid = false; 
+					}
+					break;
+				default:
 					System.out.println("there is an error in your mode formating, please try again ensure your ERROR_TYPE is valid");
+					valid = false;
+					break;
 				}
+				
+				if(valid) {
+					IntermediateControl.mode = mode; 
+					IntermediateControl.packetType = packetType;
+					IntermediateControl.packetNumber = packetNumber; 
+					IntermediateControl.delay = delay;
+					System.out.println("You have set Mode: " + mode + " Packet Type: " + packetType + " Packet# " +  packetNumber + " Delay: " + delay);
+				}
+				
 			//Not a valid Command  
 			}else {
 				System.out.println("Not a Valid Command Please try again");
@@ -171,7 +256,7 @@ public class Intermediate {
 				+ "quiet \n"
 				+ "Error Packet format: mode Error_Type Packet_Type [Packet_Number] [Delay] \n"
 				+ "For normal Operation:  mode 0\n"
-				+ "To loose a Packet:     mode 1 [ack][data] packet# \n"
+				+ "To drop a Packet:      mode 1 [ack][data] packet# \n"
 				+ "To Delay a Packet:     mode 2 [ack][data] packet# delay \n"
 				+ "To duplicate a packet: mode 3 [ack][data] packet# delay\n"
 				+ "Bad opcode:            mode 4 [ack][data] packet# \n"
@@ -181,5 +266,24 @@ public class Intermediate {
 				+ "\n");
 		
 	}
+	
+	private boolean validPacket(String packet) {
+		if(packet.equals("ack") || packet.equals("data") ||packet.equals("wrq") || packet.equals("rrq")) {
+			return true;
+		}else {
+			System.out.println("Not a valid packet type");
+			return false;
+		}
+	}
+	private boolean valInt(String item) {
+		if(item.matches("[0-9]+")){
+			return true;
+		}else {
+			return false;
+		}
+		
+	
+	}
+	
 	
 }

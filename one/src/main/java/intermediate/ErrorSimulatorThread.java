@@ -25,7 +25,7 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
-	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false, illegalTFTPOpcode = false, unknownTID = false ;
+	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false, illegalTFTPOpcode = false,illegalTFTPCounter = false ,illegalTFTPMode = false, unknownTID = false ;
 	
 	
 	// packet counters for all packet types simulation
@@ -242,8 +242,6 @@ public class ErrorSimulatorThread implements Runnable{
 				 sendReceiveSocket.send(sendPacket);	
 				 
 				 
-				 
-				 
 			 }else if (unknownTID) {
 				 // THis will simulate an illegal Tid being sent to the server/client 
 					System.out.println("Simulating an unknown TID");
@@ -266,6 +264,7 @@ public class ErrorSimulatorThread implements Runnable{
 					// Receive a message from the reception socket.
 					// Surrounded with try-catch because receiving a message might fail.
 				try {
+					System.out.println("Waiting for response");
 					errorSocket.receive(receivePacket);
 				} catch (IOException e) {
 					// Print a stack trace, close the socket, and exit.
@@ -274,12 +273,13 @@ public class ErrorSimulatorThread implements Runnable{
 					System.exit(1);
 				}
 				errorSocket.close();
-				
+				System.out.println("Closing the error socket");
 				// for now just print out the message on the packet should be the error code 
 				if(IntermediateControl.verboseMode) {
 					printRequest();
 				}
 				unknownTID = false;
+				
 				
 				// After this point the client will timeout 
 			 
@@ -336,11 +336,30 @@ public class ErrorSimulatorThread implements Runnable{
 					
 				}
 				if (IntermediateControl.mode.equals("5")) {
+					// this will simulate Illegal TFTP operation.
+					//junk the op code 
+					//junk the counter for datas/acks
+					//junk the mode for requests 
+					// choose the packet same as before 
+					
+					illegalTFTPCounter = true; 
+					
+					
+				}
+				if (IntermediateControl.mode.equals("6")) {
+					// this will simulate Illegal TFTP operation.
+					//junk the op code 
+					//junk the counter for datas/acks
+					//junk the mode for requests 
+					// choose the packet same as before 
+					
+					illegalTFTPMode = true; 
+					
+					
+				}
+				if (IntermediateControl.mode.equals("7")) { // works for now need to test
 					//This will simulate Unknown transfer ID.
-					//change source IP
-					// change source port 
-					//or both 
-					// accept ip port
+					// change source port
 					// choose the packet same as before 
 				
 					// create a new socket send the packet to the server 
