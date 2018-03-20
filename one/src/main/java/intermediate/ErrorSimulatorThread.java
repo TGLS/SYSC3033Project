@@ -173,6 +173,11 @@ public class ErrorSimulatorThread implements Runnable{
 		// To create the request, we have the sendData point to the receiveData
 		sendData = receiveData;
 		
+		if(illegalTFTPOpcode) {
+			// Modify the send packet with invalid opcode
+			sendData[0] = (byte) 9;
+			sendData[1] = (byte) 9;
+		}
 		// if the receivePacket address is the client send to the sever 
 		if(receivePacket.getAddress().equals(clientAddress) && receivePacket.getPort() == clientPort) {
 			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), serverAddress,
@@ -223,6 +228,22 @@ public class ErrorSimulatorThread implements Runnable{
 				 losePacket = false; 
 			 
 			 
+			 }else if (illegalTFTPOpcode) {
+				 
+				 // here we need to edit the opcode of the packet 
+				 
+				 formSendPacket();
+				 
+				 illegalTFTPOpcode= false; 
+				 if(IntermediateControl.verboseMode) {
+						reprintRequest();
+				}
+				 // for now this is normal mode 
+				 sendReceiveSocket.send(sendPacket);	
+				 
+				 
+				 
+				 
 			 }else if (unknownTID) {
 				 // THis will simulate an illegal Tid being sent to the server/client 
 					System.out.println("Simulating an unknown TID");

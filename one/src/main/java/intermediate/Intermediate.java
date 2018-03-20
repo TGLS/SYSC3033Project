@@ -174,8 +174,10 @@ public class Intermediate {
 				+ "To loose a Packet:     mode 1 [ack][data] packet# \n"
 				+ "To Delay a Packet:     mode 2 [ack][data] packet# delay \n"
 				+ "To duplicate a packet: mode 3 [ack][data] packet# delay\n"
-				+ "To duplicate a packet: mode 4 [ack][data] packet# delay\n"
-				+ "TFTP TID error:        mode 5 [ack][data] packet# \n"
+				+ "Bad opcode:            mode 4 [ack][data] packet# \n"
+				+ "Bad mode:              mode 5 [ack][data] packet# \n"
+				+ "Bad counter:           mode 6 [ack][data] packet# \n"
+				+ "TFTP TID error:        mode 7 [ack][data] packet# \n"
 				+ "\n");
 		
 	}
