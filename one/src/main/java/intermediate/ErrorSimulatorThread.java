@@ -225,7 +225,7 @@ public class ErrorSimulatorThread implements Runnable{
 			 
 			 }else if (unknownTID) {
 				 // THis will simulate an illegal Tid being sent to the server/client 
-					System.out.println("Simulating a");
+					System.out.println("Simulating an unknown TID");
 				 // create an error socket 
 				 DatagramSocket errorSocket = new DatagramSocket();
 				 
