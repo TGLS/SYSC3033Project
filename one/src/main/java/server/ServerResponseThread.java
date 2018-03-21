@@ -4,7 +4,9 @@ import java.nio.file.NoSuchFileException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
+import java.net.SocketTimeoutException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -36,10 +38,52 @@ public class ServerResponseThread implements Runnable {
 		if (ServerControl.verboseMode) {
 			printRequest();
 		}
-		if (!validateRequest() && ServerControl.verboseMode) {
-			System.out.println("Invalid Message!");
-			System.exit(1);
+		
+		// Invalid requests are errored.
+		if (!validateRequest()) {
+			TFTPCommons.sendError(4,sendReceiveSocket, ServerControl.verboseMode,
+					receivePacket.getAddress(), receivePacket.getPort());
+			return;
+		} else {
+			// Check the mode. We handle the following specially:
+			// OCTET (The valid case)
+			// NETASCII (This is not implemented properly)
+			// MAIL (Deprecated, we will send a no such user error)
+			// Junk gets an illegal operation.
+			
+			// We upper case the mode to ignore mode problems.
+			String mode;
+			try {
+				mode = TFTPCommons.extractModeType(receiveData, receivePacket.getLength()).toUpperCase();
+			} catch (UnsupportedEncodingException e) {
+				// This is super junk.
+				TFTPCommons.sendError(4,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort());
+				return;
+			}
+			
+			if (mode == "OCTET") {
+				// Do nothing, this is the expected result.
+				
+			} else if (mode == "NETASCII") {
+				// Tell the user that we haven't implemented NetASCII.
+				TFTPCommons.sendError(0,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort(),"NetASCII has not yet been implemented.");
+				return;
+			} else if (mode == "MAIL") {
+				// Tell the user mail is disabled on this server.
+				TFTPCommons.sendError(7,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort(),"Mail is disabled on this server.");
+				return;
+			} else {
+				// This is junk.
+				TFTPCommons.sendError(4,sendReceiveSocket, ServerControl.verboseMode,
+						receivePacket.getAddress(), receivePacket.getPort());
+				return;
+			}
 		}
+		
+		
 		// If we received a read request
 		// We'll start sending data packets
 		if (receiveData[1] == 1) {
@@ -51,10 +95,17 @@ public class ServerResponseThread implements Runnable {
 						receivePacket.getAddress(), receivePacket.getPort());
 				// Close the stream.
 				stream.close();
+			} catch (SocketTimeoutException e) {
+				// If verbose, note the request timed out.
+				if (ServerControl.verboseMode) {
+					System.out.println("Client timed out.");
+				}
+				return;
 			} catch (NoSuchFileException e) {
 				// Send a file not found error.
 				TFTPCommons.sendError(1,sendReceiveSocket, ServerControl.verboseMode,
 						receivePacket.getAddress(), receivePacket.getPort());
+				return;
 			} catch (IOException e) {
 				// Send an Access Violation Error and break.
 				TFTPCommons.sendError(2,sendReceiveSocket, ServerControl.verboseMode,
@@ -92,7 +143,15 @@ public class ServerResponseThread implements Runnable {
 			sendWriteBegin();
 			
 			// Keep the result of whether result worked
-			boolean received = TFTPCommons.receiveFile(stream,sendReceiveSocket, ServerControl.verboseMode);
+			boolean received = false;
+			try {
+				received = TFTPCommons.receiveFile(stream,sendReceiveSocket, ServerControl.verboseMode, receivePacket.getAddress(), receivePacket.getPort());
+			} catch (SocketTimeoutException e1) {
+				// If verbose, note the request timed out.
+				if (ServerControl.verboseMode) {
+					System.out.println("Client timed out.");
+				}
+			}
 			
 			// Close the stream.
 			try {

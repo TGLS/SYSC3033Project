@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.*;
-import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
@@ -105,13 +104,28 @@ public class Client {
 			printRequest();
 		}
 		sendRequest();
-		boolean received = TFTPCommons.receiveFile(stream, sendReceiveSocket, verbose);
+		boolean received = false;
+		try {
+			received = TFTPCommons.receiveFile(stream, sendReceiveSocket, verbose);
+		} catch (SocketTimeoutException e1) {
+			// Inform the user that the server timed out.
+			System.out.println("Server timed out.");
+		}
+
 		// Close the stream.
 		try {
 			stream.close();
 		} catch (IOException e) {
 			// Print a stack trace and exit.
 			e.printStackTrace();
+		}
+		
+		if (!received) {
+			try {
+				Files.delete(Paths.get(fileName));
+			} catch (IOException e) {
+				// Do nothing. The file probably got deleted beforehand somehow.
+			}
 		}
 	}
 	
@@ -175,8 +189,13 @@ public class Client {
 		}
 		
 		// Start sending data packets
-		TFTPCommons.sendFile(stream, sendReceiveSocket, verbose,
-				receivePacket.getAddress(), receivePacket.getPort());
+		try {
+			TFTPCommons.sendFile(stream, sendReceiveSocket, verbose,
+					receivePacket.getAddress(), receivePacket.getPort());
+		} catch (SocketTimeoutException e1) {
+			// Inform the user that the server timed out.
+			System.out.println("Server timed out.");
+		}
 		
 		// Close the stream.
 		try {

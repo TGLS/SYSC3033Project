@@ -17,6 +17,7 @@ public class App
     	String outgoingIP = "127.0.0.1";
     	int incomingPort = -1;
     	int outgoingPort = -1;
+    	
     	// Incoming Argument Handling
     	for (String s : args) {
     		s = s.toLowerCase();
