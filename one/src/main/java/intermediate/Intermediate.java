@@ -225,7 +225,21 @@ public class Intermediate {
 
 					break;
 				case 5:
-					System.out.println("Work in progress");
+					// Bad mode: mode 5 TransferMode 
+					if(len == 3) {
+						mode = commandParts[1];
+						// automatically needs to be rrq or wrq 
+						packetType = "rrq";
+						IntermediateControl.newMode = commandParts[2];
+						System.out.println("The Transfer mode will be set to : " + IntermediateControl.newMode);
+
+		
+					}else {
+						System.out.println("drop packet must have 3 componants:   mode 5 TransferMode");
+						valid = false; 
+					}
+					
+					
 					break;
 					
 				case 6:
@@ -298,7 +312,7 @@ public class Intermediate {
 				+ "To Delay a Packet:     mode 2 [ack][data] packet# delay \n"
 				+ "To duplicate a packet: mode 3 [ack][data] packet# delay\n"
 				+ "Bad opcode:            mode 4 [ack][data][wrq][rrq] packet# Opcode\n"
-				+ "Bad mode:              mode 5 [ack][data] packet# \n"
+				+ "Bad mode:              mode 5 TransferMode \n"
 				+ "Bad counter:           mode 6 [ack][data] packet# \n"
 				+ "TFTP TID error:        mode 7 [ack][data] packet# \n"
 				+ "\n");

@@ -9,7 +9,8 @@ public class IntermediateControl {
 	static Boolean verboseMode = false; 
 	static Boolean canClose = true;
 	static String mode = "0"; // default to the basic 
-	static String packetType = ""; 
+	static String packetType = "";
+	static String newMode = "";
 	static int packetNumber;
 	static int delay;
 	static int[] opcode;
