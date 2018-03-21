@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -23,7 +24,7 @@ public class TFTPCommons {
 	// We're moving the max_buffer constant here.
 	public final static int max_buffer = 516;
 	
-	public static String extractFileName(byte[] messageData, int dataLength) {
+	public static String extractRequestData(byte[] messageData, int dataLength, int dataType) throws UnsupportedEncodingException {
 		// Return a blank string if packet doesn't include a file name
 		if ((messageData[1] == 1) | (messageData[1] == 2)) {
 			// Copy the byte array after the first two bytes
@@ -35,19 +36,22 @@ public class TFTPCommons {
 			// Now we convert the byte array to text, and split at null
 			// characters
 			String rawText = null;
-			try {
-				rawText = new String(buffer, "UTF-8");
-			} catch (UnsupportedEncodingException e) {
-				// Print an error message and quit 
-				System.out.println("Bad File Name");
-				System.exit(1);
-			}
+			rawText = new String(buffer, "UTF-8");
+			
 			String[] text = rawText.split("\u0000");
 
-			// Then we print the file name and mode, with labels
-			return text[0];
+			// Return the mode if 1 and filename if 0.
+			return text[dataType];
 		}
 		return "";
+	}
+	
+	public static String extractFileName(byte[] messageData, int dataLength) throws UnsupportedEncodingException {
+		return extractRequestData(messageData, dataLength, 0);
+	}
+	
+	public static String extractModeType(byte[] messageData, int dataLength) throws UnsupportedEncodingException {
+		return extractRequestData(messageData, dataLength, 1);
 	}
 	
 	public static void printMessage(Boolean send, byte[] messageData, int dataLength) {
@@ -82,22 +86,18 @@ public class TFTPCommons {
 				System.out.println("Invalid Message");
 			}
 			
-			// For read and write requests, extract the filename and mode
+			// For read and write requests, print the filename and mode
 			if ((messageData[1] == 1) | (messageData[1] == 2)) {
-				// Copy the byte array after the first two bytes
-				byte[] buffer = new byte[dataLength];
-				for (int n = 2; n < dataLength; n++) {
-					buffer[n - 2] = messageData[n];
+				try {
+					System.out.println("File Name: " + extractRequestData(messageData, dataLength, 0));
+				} catch (UnsupportedEncodingException e) {
+					System.out.println("Bad File Name.");
 				}
-
-				// Now we convert the byte array to text, and split at null
-				// characters
-				String rawText = new String(buffer, "UTF-8");
-				String[] text = rawText.split("\u0000");
-
-				// Then we print the file name and mode, with labels
-				System.out.println("File Name: " + text[0]);
-				System.out.println("Mode: " + text[1]);
+				try {
+					System.out.println("Mode: " + extractRequestData(messageData, dataLength, 1));
+				} catch (UnsupportedEncodingException e) {
+					System.out.println("Bad Mode.");
+				}
 			}
 			
 			// For Data and Acknowledgment Messages
@@ -117,10 +117,6 @@ public class TFTPCommons {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// If we get an array exception, the message is badly formed
 			System.out.println("Error reading message.");
-		} catch (UnsupportedEncodingException e) {
-			// If we have an unsupported character, we'll just make a note.
-			// This doesn't necessarily mean the request is invalid.
-			System.out.println("Cannot render filename or mode.");
 		}
 
 		System.out.println("");
@@ -210,9 +206,16 @@ public class TFTPCommons {
 		System.out.println(message);
 	}
 
-	public static void incrementBlockCounter(byte[] blockCounter) {
+	public static void incrementBlockCounter(byte[] blockCounter, byte[] previousBlockCounter) {
 		// This is simple. We take in a 2 byte block counter, and we increment it.
 		// We wrap around if necessary.
+		
+		// If we get a non-null previousBlockCounter, set it to the value of blockCounter
+		if (previousBlockCounter != null) {
+			previousBlockCounter[0] = blockCounter[0];
+			previousBlockCounter[1] = blockCounter[1];
+		}
+		
 		if (blockCounter[1] == -1) {
 			blockCounter[1] = 0;
 			if (blockCounter[0] == -1) {
@@ -224,10 +227,15 @@ public class TFTPCommons {
 			blockCounter[1]++;
 		}
 	}
+	
+	public static boolean receiveFile(OutputStream stream, SendReceiveSocket sendReceiveSocket, Boolean verbose) throws SocketTimeoutException {
+		return receiveFile(stream, sendReceiveSocket, verbose, null, -1);
+	}
 
-	public static boolean receiveFile(OutputStream stream, SendReceiveSocket sendReceiveSocket, Boolean verbose) {
+	public static boolean receiveFile(OutputStream stream, SendReceiveSocket sendReceiveSocket, Boolean verbose, InetAddress targetAddress, int targetPort) throws SocketTimeoutException {
 		// First of all, let's create a block counter and some other important variables
 		byte[] blockCounter = {0, 1};
+		byte[] previousBlockCounter = {0, 0};
 		byte[] receiveData;
 		byte[] respondData; 
 		DatagramPacket receivePacket;
@@ -253,70 +261,37 @@ public class TFTPCommons {
 					printMessage(false, receiveData, receivePacket.getLength());
 				}
 				
-				// Check if it's an Error packet.
-				if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
-					// Print the error message if we're not verbose
-					if (!verbose) {
-						printErrorMessage(receiveData, receivePacket.getLength());
-					}
-					
-					// Stop; we won't be receiving any more packets after this.
-					return false;
+				// Set our targetAddress if not yet set.
+				if (targetAddress == null) {
+					targetAddress = receivePacket.getAddress();
+					targetPort = receivePacket.getPort();
 				}
 				
-				// If we get the previous data packet, respond the previous ACK
-				if ((receiveData[0] == 0) & (receiveData[1] == 3) &
-						(receiveData[2] == blockCounter[0]) &
-						(receiveData[3] == blockCounter[1] - 1)) {
-					// Then we respond with an acknowledge.
-					respondData = new byte[] {0, 4, blockCounter[0], (byte) (blockCounter[1] - 1)};
-					respondPacket = new DatagramPacket(respondData, 4, receivePacket.getAddress(),
-							receivePacket.getPort());
-					
-					// Print response if we're being verbose
-					if (verbose) {
-						printMessage(true, respondData, respondPacket.getLength());
-					}
-					
-					sendReceiveSocket.send(respondPacket);
-				}
-				
-				// Check if it's a data packet
-				// And whether if its block counter matches
-				if (receivePacket.getLength() >= 4) {
-					if ((receiveData[0] == 0) & (receiveData[1] == 3) &
-						(receiveData[2] == blockCounter[0]) &
-						(receiveData[3] == blockCounter[1])) {
-						// If it does, append the data block, if any
-						if (receiveData.length > 4) {
-							try {
-								stream.write(Arrays.copyOfRange(receiveData, 4, receivePacket.getLength()));
-							} catch (AccessDeniedException e) {
-								// Send an Access Violation Error and break.
-								TFTPCommons.sendError(2,sendReceiveSocket, verbose,
-										receivePacket.getAddress(), receivePacket.getPort());
-								return false;
-							} catch (IOException e) {
-								// Out of disk space errors throw this.
-								// Check if the disk is out of space
-								if (new File("/").getUsableSpace() == 0) {
-									// Send a Disk Full Error and break.
-									TFTPCommons.sendError(3,sendReceiveSocket, verbose,
-											receivePacket.getAddress(), receivePacket.getPort());
-									return false;
-								} else {
-									// Send a Access Violation and break.
-									TFTPCommons.sendError(2,sendReceiveSocket, verbose,
-											receivePacket.getAddress(), receivePacket.getPort());
-									return false;
-								}
-							}
+				// Check whether it has the right address/port
+				if (targetAddress != receivePacket.getAddress() || targetPort != receivePacket.getPort()) {
+					// Send an invalid TID message to the sender.
+					TFTPCommons.sendError(5,sendReceiveSocket, verbose,
+							receivePacket.getAddress(), receivePacket.getPort());
+				} else {
+					// Check if it's an Error packet.
+					if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
+						// Print the error message if we're not verbose
+						if (!verbose) {
+							printErrorMessage(receiveData, receivePacket.getLength());
 						}
-
+						
+						// Stop; we won't be receiving any more packets after this.
+						return false;
+					}
+					
+					// If we get the previous data packet, respond the previous ACK
+					else if ((receiveData[0] == 0) & (receiveData[1] == 3) &
+							(receiveData[2] == previousBlockCounter[0]) &
+							(receiveData[3] == previousBlockCounter[1])) {
 						// Then we respond with an acknowledge.
-						respondData = new byte[] {0, 4, blockCounter[0], blockCounter[1]};
-						respondPacket = new DatagramPacket(respondData, 4, receivePacket.getAddress(),
-								receivePacket.getPort());
+						respondData = new byte[] {0, 4, previousBlockCounter[0], previousBlockCounter[1]};
+						respondPacket = new DatagramPacket(respondData, 4, targetAddress,
+								targetPort);
 						
 						// Print response if we're being verbose
 						if (verbose) {
@@ -324,26 +299,79 @@ public class TFTPCommons {
 						}
 						
 						sendReceiveSocket.send(respondPacket);
-						
-						// Increment blockCounter
-						incrementBlockCounter(blockCounter);
-						
-						// Then check that whether we're finished.
-						if (receivePacket.getLength() < 516) {
-							break;
+					}
+					
+					// Check if it's a data packet
+					// And whether if its block counter matches
+					else if (receivePacket.getLength() >= 4) {
+						if ((receiveData[0] == 0) & (receiveData[1] == 3) &
+							(receiveData[2] == blockCounter[0]) &
+							(receiveData[3] == blockCounter[1])) {
+							// If it does, append the data block, if any
+							if (receiveData.length > 4) {
+								try {
+									stream.write(Arrays.copyOfRange(receiveData, 4, receivePacket.getLength()));
+								} catch (AccessDeniedException e) {
+									// Send an Access Violation Error and break.
+									TFTPCommons.sendError(2,sendReceiveSocket, verbose,
+											targetAddress, targetPort);
+									return false;
+								} catch (IOException e) {
+									// Out of disk space errors throw this.
+									// Check if the disk is out of space
+									if (new File("/").getUsableSpace() == 0) {
+										// Send a Disk Full Error and break.
+										TFTPCommons.sendError(3,sendReceiveSocket, verbose,
+												targetAddress, targetPort);
+										return false;
+									} else {
+										// Send a Access Violation and break.
+										TFTPCommons.sendError(2,sendReceiveSocket, verbose,
+												targetAddress, targetPort);
+										return false;
+									}
+								}
+							}
+
+							// Then we respond with an acknowledge.
+							respondData = new byte[] {0, 4, blockCounter[0], blockCounter[1]};
+							respondPacket = new DatagramPacket(respondData, 4, targetAddress,
+									targetPort);
+							
+							// Print response if we're being verbose
+							if (verbose) {
+								printMessage(true, respondData, respondPacket.getLength());
+							}
+							
+							sendReceiveSocket.send(respondPacket);
+							
+							// Increment blockCounter
+							incrementBlockCounter(blockCounter, previousBlockCounter);
+							
+							// Then check whether we're finished.
+							if (receivePacket.getLength() < 516) {
+								return true;
+							}
 						}
+					} else {
+						// Send an illegal operation message to the sender and quit.
+						TFTPCommons.sendError(4,sendReceiveSocket, verbose,
+								receivePacket.getAddress(), receivePacket.getPort());
+						return false;
 					}
 				}
 			}
+		} catch (SocketTimeoutException e) {
+			// Raise; the server won't care (beyond deleting the file), the client will.
+			throw e;
 		} catch (IOException e) {
 			// Print an error and stop
 			e.printStackTrace();
+			return false;
 		}
-		
-		return true;
 	}
 	
-	public static void sendFile(InputStream stream, SendReceiveSocket sendReceiveSocket, Boolean verbose, InetAddress targetAddress, int targetPort) {
+	public static void sendFile(InputStream stream, SendReceiveSocket sendReceiveSocket, Boolean verbose, InetAddress targetAddress, int targetPort) throws SocketTimeoutException {
 		// First of all, let's create a block counter and some other important variables
 		byte[] blockCounter = {0, 1};
 		ArrayList<Byte> respondDataBuilder;
@@ -423,32 +451,47 @@ public class TFTPCommons {
 						printMessage(false, receiveData, receivePacket.getLength());
 					}
 					
-					// Check if it's an acknowledge packet
-					// And whether if its block counter matches
-					if (receivePacket.getLength() == 4) {
-						if ((receiveData[0] == 0) & (receiveData[1] == 4) &
-							(receiveData[2] == blockCounter[0]) &
-							(receiveData[3] == blockCounter[1])) {
-							// Increment blockCounter
-							incrementBlockCounter(blockCounter);
-							break;
-						}
-					}
-					
-					// Check if it's an Error packet.
-					if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
-						// Print the error message if we're not verbose
-						if (!verbose) {
-							printErrorMessage(receiveData, receivePacket.getLength());
+					// Check whether it has the right address/port
+					if (targetAddress != receivePacket.getAddress() || targetPort != receivePacket.getPort()) {
+						// Send an invalid TID message to the sender.
+						TFTPCommons.sendError(5,sendReceiveSocket, verbose,
+								receivePacket.getAddress(), receivePacket.getPort());
+					} else {
+						// Check if it's an acknowledge packet
+						// And whether if its block counter matches
+						if (receivePacket.getLength() == 4) {
+							if ((receiveData[0] == 0) & (receiveData[1] == 4) &
+								(receiveData[2] == blockCounter[0]) &
+								(receiveData[3] == blockCounter[1])) {
+								// Increment blockCounter
+								incrementBlockCounter(blockCounter, null);
+								break;
+							}
 						}
 						
-						// Stop; we won't be receiving any more packets after this.
-						return;
+						// Check if it's an Error packet.
+						else if ((receiveData[0] == 0) & (receiveData[1] == 5)) {
+							// Print the error message if we're not verbose
+							if (!verbose) {
+								printErrorMessage(receiveData, receivePacket.getLength());
+							}
+							
+							// Stop; we won't be receiving any more packets after this.
+							return;
+						} else {
+							// Send an illegal operation message to the sender and quit.
+							TFTPCommons.sendError(4,sendReceiveSocket, verbose,
+									receivePacket.getAddress(), receivePacket.getPort());
+							return;
+						}
 					}
 				}
 			}
 			
-		} catch (AccessDeniedException e) {
+		} catch (SocketTimeoutException e) {
+			// Raise; the server won't care, the client will.
+			throw e;
+		}  catch (AccessDeniedException e) {
 			// Send an Access Violation Error and break.
 			TFTPCommons.sendError(2,sendReceiveSocket, verbose,
 					targetAddress, targetPort);

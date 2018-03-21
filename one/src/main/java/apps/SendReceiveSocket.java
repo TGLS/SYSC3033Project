@@ -31,6 +31,7 @@ public class SendReceiveSocket {
 	}
 
 	public void receive(DatagramPacket receivePacket, boolean verbose) throws IOException {
+		int counter = 24;
 		// Until we receive a packet 
 		while (true) {
 			try {
@@ -39,6 +40,11 @@ public class SendReceiveSocket {
 				// After we successfully received a packet, break
 				break;
 			} catch (SocketTimeoutException e) {
+				// Count down to zero. If at zero, stop retransmitting and raise the timeout.
+				counter--;
+				if (counter == 0) {
+					throw e;
+				}
 				// Retransmit the last sent packet, unless it's an ACK or we haven't sent a packet yet.
 				if (previousPacket != null) {
 					if (verbose) {
