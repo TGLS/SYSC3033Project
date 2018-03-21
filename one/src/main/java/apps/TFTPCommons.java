@@ -258,6 +258,7 @@ public class TFTPCommons {
 				
 				// Print it if we're being verbose
 				if (verbose) {
+					System.out.println(receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort());
 					printMessage(false, receiveData, receivePacket.getLength());
 				}
 				
@@ -268,7 +269,7 @@ public class TFTPCommons {
 				}
 				
 				// Check whether it has the right address/port
-				if (targetAddress != receivePacket.getAddress() || targetPort != receivePacket.getPort()) {
+				if (!targetAddress.equals(receivePacket.getAddress()) || targetPort != receivePacket.getPort()) {
 					// Send an invalid TID message to the sender.
 					TFTPCommons.sendError(5,sendReceiveSocket, verbose,
 							receivePacket.getAddress(), receivePacket.getPort());
@@ -448,11 +449,12 @@ public class TFTPCommons {
 					
 					// Print it if we're being verbose
 					if (verbose) {
+						System.out.println(receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort());
 						printMessage(false, receiveData, receivePacket.getLength());
 					}
 					
 					// Check whether it has the right address/port
-					if (targetAddress != receivePacket.getAddress() || targetPort != receivePacket.getPort()) {
+					if (!targetAddress.equals(receivePacket.getAddress()) || targetPort != receivePacket.getPort()) {
 						// Send an invalid TID message to the sender.
 						TFTPCommons.sendError(5,sendReceiveSocket, verbose,
 								receivePacket.getAddress(), receivePacket.getPort());

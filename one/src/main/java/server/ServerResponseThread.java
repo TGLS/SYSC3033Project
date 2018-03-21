@@ -53,6 +53,7 @@ public class ServerResponseThread implements Runnable {
 			
 			// We upper case the mode to ignore mode problems.
 			String mode;
+			
 			try {
 				mode = TFTPCommons.extractModeType(receiveData, receivePacket.getLength()).toUpperCase();
 			} catch (UnsupportedEncodingException e) {
@@ -62,15 +63,15 @@ public class ServerResponseThread implements Runnable {
 				return;
 			}
 			
-			if (mode == "OCTET") {
+			if (mode.startsWith("OCTET")) {
 				// Do nothing, this is the expected result.
 				
-			} else if (mode == "NETASCII") {
+			} else if (mode.startsWith("NetASCII")) {
 				// Tell the user that we haven't implemented NetASCII.
 				TFTPCommons.sendError(0,sendReceiveSocket, ServerControl.verboseMode,
 						receivePacket.getAddress(), receivePacket.getPort(),"NetASCII has not yet been implemented.");
 				return;
-			} else if (mode == "MAIL") {
+			} else if (mode.startsWith("MAIL")) {
 				// Tell the user mail is disabled on this server.
 				TFTPCommons.sendError(7,sendReceiveSocket, ServerControl.verboseMode,
 						receivePacket.getAddress(), receivePacket.getPort(),"Mail is disabled on this server.");
@@ -186,6 +187,7 @@ public class ServerResponseThread implements Runnable {
 	}
 	
 	private void printRequest() {
+		System.out.println(receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort());
 		TFTPCommons.printMessage(false, receiveData, receivePacket.getLength());
 	}
 	
