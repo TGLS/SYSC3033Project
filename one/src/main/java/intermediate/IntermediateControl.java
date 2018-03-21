@@ -12,7 +12,9 @@ public class IntermediateControl {
 	static String packetType = "";
 	static String newMode = "";
 	static int packetNumber;
+	static byte[] Counter;
 	static int delay;
 	static int[] opcode;
+	
 	public IntermediateControl(){}
 }

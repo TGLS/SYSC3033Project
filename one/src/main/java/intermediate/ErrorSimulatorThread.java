@@ -180,37 +180,49 @@ public class ErrorSimulatorThread implements Runnable{
 			sendData[0] = (byte) IntermediateControl.opcode[0];
 			sendData[1] = (byte) IntermediateControl.opcode[1];
 			
-			System.out.println("opcod chnged to " + sendData[0] + " " + sendData[1]);
+			System.out.println("opcod changed to " + sendData[0] + " " + sendData[1]);
 			
 		}
 		
+		
+		if(illegalTFTPCounter) {
+			// Modify the send packet with invalid opcode
+			sendData[2] = (byte) IntermediateControl.Counter[0];
+			sendData[3] = (byte) IntermediateControl.Counter[1];
+			System.out.println("Counter  changed to " + sendData[2] + " " + sendData[3]);
+			
+		}
+		
+		
+		
 		if(illegalTFTPMode) {
 			// in this case we need to modify the mode 
-			// lets work back from the end and look for 0 byte 
+			// lets work back from the end and look for 0 byte 			
 			byte[] stringBuffer;
 			int count;
-			
-			for(count = receiveData.length-1; count >0; count--) {
+			// look for the 0 byte seperating the file name and mode 
+			for(count = 2; count <receiveData.length; count++) {
 				
 				if(receiveData[count] ==0) {
 					// we found the 0 lets break 
+					break;
 				}
-				
 			}
 			
-			//now copy everyhting except the count into new array
+			//now copy everyhting except the mode into new array
 			ArrayList<Byte> buffer = new ArrayList<Byte>();
 			for(int i = 0; i<count;i++) {
 				buffer.add(receiveData[i]);
 			}
-			
+			//add the 0 byte back in 
+			buffer.add((byte) 0);
 			
 			// now add the new mode 
-			
 			stringBuffer = IntermediateControl.newMode.getBytes();
 			for (byte b : stringBuffer) {
 				buffer.add(b);
 			}
+			buffer.add((byte) 0);
 			
 			
 			// put it all into send data
@@ -221,10 +233,6 @@ public class ErrorSimulatorThread implements Runnable{
 				n++;
 			}
 			
-			
-			
-			
-			
 		}else { 
 			sendData = receiveData;
 		}
@@ -234,14 +242,11 @@ public class ErrorSimulatorThread implements Runnable{
 		
 		// if the receivePacket address is the client send to the sever 
 		if(receivePacket.getAddress().equals(clientAddress) && receivePacket.getPort() == clientPort) {
-			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), serverAddress,
-					serverPort);
-			
+			sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress,serverPort);	
 			
 		}else {
 			// if not send to the client 
-			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), clientAddress,
-					clientPort);
+			sendPacket = new DatagramPacket(sendData,  sendData.length, clientAddress, clientPort);
 		}
 	}
 	
@@ -279,16 +284,28 @@ public class ErrorSimulatorThread implements Runnable{
 				 // don't do anything
 				 System.out.println("A packet has been dropped!");
 				 losePacket = false; 
-			 
+			 }else if (illegalTFTPCounter) {
+				 
+				 System.out.println("Changing the Counter!");
+				 
+				 formSendPacket();
+				 if(IntermediateControl.verboseMode) {
+						reprintRequest();
+				}
+				 
+				 illegalTFTPCounter = false;
+				 
 			
 			 }else if (illegalTFTPMode) {
 				 
 				 System.out.println("Changing the Transfer Mode!");
-				 
 				 formSendPacket();
-				 
-				 
 				 illegalTFTPMode = false;
+				 if(IntermediateControl.verboseMode) {
+						reprintRequest();
+				}
+				 // for now this is normal mode 
+				 sendReceiveSocket.send(sendPacket);	
 				 
 			 }else if (illegalTFTPOpcode) {
 				 

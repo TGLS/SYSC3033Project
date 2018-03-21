@@ -1,5 +1,7 @@
 package intermediate;
 
+import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
@@ -243,7 +245,44 @@ public class Intermediate {
 					break;
 					
 				case 6:
-					System.out.println("Work in progress");
+					// Bad counter format :  mode 6 [ack][data] packet# counter
+					if(len == 6) {
+						mode = commandParts[1];
+						// validate the packet type
+						if(validPacket(commandParts[2]) && (!commandParts[2].equals("wrq")) && (!commandParts[2].equals("rrq"))) {
+							packetType = commandParts[2];
+							//validate the packet number 
+							if(valInt(commandParts[3])) {
+								packetNumber = Integer.parseInt(commandParts[3]);
+								// now we need to add in the counter
+								if((commandParts[4].equals("0")  || commandParts[4].equals("1")) && (commandParts[5].equals("0") || commandParts[5].equals("1"))) {
+									
+									byte[] Counter = new byte[2]; 
+									
+									Counter[0] = (byte) Integer.parseInt(commandParts[4]);
+									Counter[1] = (byte) Integer.parseInt(commandParts[5]);
+									
+									
+									
+									IntermediateControl.Counter =Counter;
+									
+									System.out.println("The Counter will be set to: " + IntermediateControl.Counter[0] + " " + IntermediateControl.Counter[1]);
+								}else {
+									System.out.println("Invalid counter must be [0][1] [0][1] ");
+									valid = false;
+								}
+							}else {
+								System.out.println("Invalid packet number");
+								valid = false;
+							}
+						}else {
+							System.out.println("mode 6 can only be used on ack or data packets");
+							valid = false; 
+						}
+					}else {
+						System.out.println("Bad counter format 6 componants:    mode 6 [ack][data] packet# [0][1] [0][1]  ");
+						valid = false; 
+					}
 					break;
 				case 7:
 					// invalid TID :  mode 7 [ack][data] packet#
@@ -313,7 +352,7 @@ public class Intermediate {
 				+ "To duplicate a packet: mode 3 [ack][data] packet# delay\n"
 				+ "Bad opcode:            mode 4 [ack][data][wrq][rrq] packet# Opcode\n"
 				+ "Bad mode:              mode 5 TransferMode \n"
-				+ "Bad counter:           mode 6 [ack][data] packet# \n"
+				+ "Bad counter:           mode 6 [ack][data] packet# [0][1] [0][1] \n"
 				+ "TFTP TID error:        mode 7 [ack][data] packet# \n"
 				+ "\n");
 		
