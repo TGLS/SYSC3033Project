@@ -175,14 +175,16 @@ public class ErrorSimulatorThread implements Runnable{
 		
 		if(illegalTFTPOpcode) {
 			// Modify the send packet with invalid opcode
-			sendData[0] = (byte) 9;
-			sendData[1] = (byte) 9;
+			sendData[0] = (byte) IntermediateControl.opcode[0];
+			sendData[1] = (byte) IntermediateControl.opcode[1];
+			
+			System.out.println("opcod chnged to " + sendData[0] + " " + sendData[1]);
+			
 		}
 		// if the receivePacket address is the client send to the sever 
 		if(receivePacket.getAddress().equals(clientAddress) && receivePacket.getPort() == clientPort) {
 			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), serverAddress,
 					serverPort);
-		
 			
 			
 		}else {
@@ -231,6 +233,7 @@ public class ErrorSimulatorThread implements Runnable{
 			 }else if (illegalTFTPOpcode) {
 				 
 				 // here we need to edit the opcode of the packet 
+				 System.out.println("Changing the Opcode!");
 				 
 				 formSendPacket();
 				 
@@ -332,6 +335,7 @@ public class ErrorSimulatorThread implements Runnable{
 					// choose the packet same as before 
 					
 					illegalTFTPOpcode = true; 
+					
 					
 					
 				}

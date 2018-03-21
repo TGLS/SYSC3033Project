@@ -183,7 +183,46 @@ public class Intermediate {
 					}
 					break;
 				case 4:
-					System.out.println("Work in progress");
+					//"Bad opcode:  mode 4 [ack][data][wrq][rrq] packet# opcode
+					if(len == 5) {
+						mode = commandParts[1];
+						// validate the packet type
+						if(validPacket(commandParts[2])) {
+							packetType = commandParts[2];
+							//validate the packet number 
+							if(valInt(commandParts[3])) {
+								packetNumber = Integer.parseInt(commandParts[3]);
+								//validate the opcode 
+								if(valInt(commandParts[4]) && commandParts[4].length() ==2) {
+									
+									int[] opc = new int[2]; 
+									opc[0] =Integer.parseInt(commandParts[4].split("")[0]);
+									opc[1] =Integer.parseInt(commandParts[4].split("")[1]);
+									
+									IntermediateControl.opcode = opc;
+									
+									System.out.println("We have set the opcode to " + opc[0] + " " + opc[1]);
+									
+									
+									
+								}else {
+									System.out.println("Invalid opcode");
+									valid =false; 
+								}
+								
+								
+							}else {
+								System.out.println("Invalid packet number");
+								valid = false;
+							}
+						}else {
+							valid = false; 
+						}
+					}else {
+						System.out.println("drop packet must have 4 componants:   mode 4 [ack][data] packet# ");
+						valid = false; 
+					}
+
 					break;
 				case 5:
 					System.out.println("Work in progress");
@@ -250,7 +289,6 @@ public class Intermediate {
 	}
 	
 	private void printMenue() {
-		
 		System.out.print("\nPlease Enter one of the following commands \n"
 				+ "verbose \n"
 				+ "quiet \n"
@@ -259,7 +297,7 @@ public class Intermediate {
 				+ "To drop a Packet:      mode 1 [ack][data] packet# \n"
 				+ "To Delay a Packet:     mode 2 [ack][data] packet# delay \n"
 				+ "To duplicate a packet: mode 3 [ack][data] packet# delay\n"
-				+ "Bad opcode:            mode 4 [ack][data] packet# \n"
+				+ "Bad opcode:            mode 4 [ack][data][wrq][rrq] packet# Opcode\n"
 				+ "Bad mode:              mode 5 [ack][data] packet# \n"
 				+ "Bad counter:           mode 6 [ack][data] packet# \n"
 				+ "TFTP TID error:        mode 7 [ack][data] packet# \n"
@@ -281,8 +319,6 @@ public class Intermediate {
 		}else {
 			return false;
 		}
-		
-	
 	}
 	
 	

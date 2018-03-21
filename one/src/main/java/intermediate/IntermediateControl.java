@@ -12,5 +12,6 @@ public class IntermediateControl {
 	static String packetType = ""; 
 	static int packetNumber;
 	static int delay;
+	static int[] opcode;
 	public IntermediateControl(){}
 }
