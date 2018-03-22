@@ -6,6 +6,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+
 import apps.TFTPCommons;
 
 /**
@@ -25,7 +27,7 @@ public class ErrorSimulatorThread implements Runnable{
 	private int clientPort;
 	private Boolean firstContact = true; 
 	
-	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false;
+	private Boolean duplicatePacket = false, delayPacket = false, losePacket = false, illegalTFTPOpcode = false,illegalTFTPCounter = false ,illegalTFTPMode = false, unknownTID = false ;
 	
 	
 	// packet counters for all packet types simulation
@@ -78,7 +80,6 @@ public class ErrorSimulatorThread implements Runnable{
 			}
 			
 			isError();
-			
 			
 			sendPacket();
 			
@@ -172,17 +173,84 @@ public class ErrorSimulatorThread implements Runnable{
 	private void formSendPacket() {
 		
 		// To create the request, we have the sendData point to the receiveData
-		sendData = receiveData;
+		
+		int length = receivePacket.getLength();
+		
+		if(illegalTFTPOpcode) {
+			// Modify the send packet with invalid opcode
+			sendData[0] = (byte) IntermediateControl.opcode[0];
+			sendData[1] = (byte) IntermediateControl.opcode[1];
+			
+			System.out.println("opcod changed to " + sendData[0] + " " + sendData[1]);
+			
+		}
+		
+		
+		if(illegalTFTPCounter) {
+			// Modify the send packet with invalid opcode
+			sendData[2] = (byte) IntermediateControl.Counter[0];
+			sendData[3] = (byte) IntermediateControl.Counter[1];
+			System.out.println("Counter  changed to " + sendData[2] + " " + sendData[3]);
+			
+		}
+		
+		
+		
+		if(illegalTFTPMode) {
+			// in this case we need to modify the mode 
+			// lets work back from the end and look for 0 byte 			
+			byte[] stringBuffer;
+			int count;
+			// look for the 0 byte seperating the file name and mode 
+			for(count = 2; count <receiveData.length; count++) {
+				
+				if(receiveData[count] ==0) {
+					// we found the 0 lets break 
+					break;
+				}
+			}
+			
+			//now copy everyhting except the mode into new array
+			ArrayList<Byte> buffer = new ArrayList<Byte>();
+			for(int i = 0; i<count;i++) {
+				buffer.add(receiveData[i]);
+			}
+			//add the 0 byte back in 
+			buffer.add((byte) 0);
+			
+			// now add the new mode 
+			stringBuffer = IntermediateControl.newMode.getBytes();
+			for (byte b : stringBuffer) {
+				buffer.add(b);
+			}
+			buffer.add((byte) 0);
+			
+			
+			// put it all into send data
+			sendData = new byte[buffer.size()];
+			int n = 0;
+			for (Byte b : buffer) {
+				sendData[n] = b;
+				n++;
+			}
+			
+			length = sendData.length;
+			
+			
+		}else { 
+			sendData = receiveData;
+		}
+		
+		//sendData = receiveData;
+		
 		
 		// if the receivePacket address is the client send to the sever 
 		if(receivePacket.getAddress().equals(clientAddress) && receivePacket.getPort() == clientPort) {
-			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), serverAddress,
-					serverPort);
+			sendPacket = new DatagramPacket(sendData, length, serverAddress,serverPort);	
 			
 		}else {
 			// if not send to the client 
-			sendPacket = new DatagramPacket(sendData, receivePacket.getLength(), clientAddress,
-					clientPort);
+			sendPacket = new DatagramPacket(sendData,  length, clientAddress, clientPort);
 		}
 	}
 	
@@ -220,6 +288,85 @@ public class ErrorSimulatorThread implements Runnable{
 				 // don't do anything
 				 System.out.println("A packet has been dropped!");
 				 losePacket = false; 
+			 }else if (illegalTFTPCounter) {
+				 
+				 System.out.println("Changing the Counter!");
+				 
+				 formSendPacket();
+				 if(IntermediateControl.verboseMode) {
+						reprintRequest();
+				}
+				 
+				 illegalTFTPCounter = false;
+				 
+			
+			 }else if (illegalTFTPMode) {
+				 
+				 System.out.println("Changing the Transfer Mode!");
+				 formSendPacket();
+				 illegalTFTPMode = false;
+				 if(IntermediateControl.verboseMode) {
+						reprintRequest();
+				}
+				 // for now this is normal mode 
+				 sendReceiveSocket.send(sendPacket);	
+				 
+			 }else if (illegalTFTPOpcode) {
+				 
+				 // here we need to edit the opcode of the packet 
+				 System.out.println("Changing the Opcode!");
+				 
+				 formSendPacket();
+				 
+				 illegalTFTPOpcode= false; 
+				 if(IntermediateControl.verboseMode) {
+						reprintRequest();
+				}
+				 // for now this is normal mode 
+				 sendReceiveSocket.send(sendPacket);	
+				 
+				 
+			 }else if (unknownTID) {
+				 // THis will simulate an illegal Tid being sent to the server/client 
+					System.out.println("Simulating an unknown TID");
+				 // create an error socket 
+				 DatagramSocket errorSocket = new DatagramSocket();
+				 
+				if(IntermediateControl.verboseMode) {
+					reprintRequest();
+				}
+				
+				 //send the packet using the new socket 
+				 errorSocket.send(sendPacket);
+			 
+				 //wait to receive the error message
+				 receiveData = new byte[TFTPCommons.max_buffer];
+					
+					// Create a packet for the incoming packet.
+				receivePacket = new DatagramPacket(receiveData, receiveData.length);
+					
+					// Receive a message from the reception socket.
+					// Surrounded with try-catch because receiving a message might fail.
+				try {
+					System.out.println("Waiting for response");
+					errorSocket.receive(receivePacket);
+				} catch (IOException e) {
+					// Print a stack trace, close the socket, and exit.
+					e.printStackTrace();
+					errorSocket.close();
+					System.exit(1);
+				}
+				errorSocket.close();
+				System.out.println("Closing the error socket");
+				// for now just print out the message on the packet should be the error code 
+				if(IntermediateControl.verboseMode) {
+					printRequest();
+				}
+				unknownTID = false;
+				
+				
+				// After this point the client will timeout 
+			 
 			 }else {
 				 if(IntermediateControl.verboseMode) {
 						reprintRequest();
@@ -261,6 +408,56 @@ public class ErrorSimulatorThread implements Runnable{
 					duplicatePacket = true;
 					IntermediateControl.canClose =false;
 				}
+				if (IntermediateControl.mode.equals("4")) {
+					// this will simulate Illegal TFTP operation.
+					//junk the op code 
+					//junk the counter for datas/acks
+					//junk the mode for requests 
+					// choose the packet same as before 
+					
+					illegalTFTPOpcode = true; 
+					
+					
+					
+				}
+				if (IntermediateControl.mode.equals("5")) {
+					// this will simulate Illegal TFTP operation.
+					//junk the op code 
+					//junk the counter for datas/acks
+					//junk the mode for requests 
+					// choose the packet same as before 
+					illegalTFTPMode = true; 
+					
+					
+					
+				}
+				if (IntermediateControl.mode.equals("6")) {
+					// this will simulate Illegal TFTP operation.
+					//junk the op code 
+					//junk the counter for datas/acks
+					//junk the mode for requests 
+					// choose the packet same as before 
+					
+					illegalTFTPCounter = true; 
+					
+					
+				}
+				if (IntermediateControl.mode.equals("7")) { // works for now need to test
+					//This will simulate Unknown transfer ID.
+					// change source port
+					// choose the packet same as before 
+				
+					// create a new socket send the packet to the server 
+					// wait of the error response 
+					// print the response 
+					// close the socket 
+					
+					unknownTID = true;
+					
+					
+					
+					
+				}
 				
 				IntermediateControl.packetType = "";
 				IntermediateControl.mode = "0";
@@ -269,5 +466,8 @@ public class ErrorSimulatorThread implements Runnable{
 		}
 		
 	}
+
+	
+	
 	
 }
