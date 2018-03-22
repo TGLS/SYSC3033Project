@@ -221,7 +221,7 @@ public class Intermediate {
 							valid = false; 
 						}
 					}else {
-						System.out.println("drop packet must have 4 componants:   mode 4 [ack][data] packet# ");
+						System.out.println("mode 4 [ack][data][wrq][rrq] packet# opcode ");
 						valid = false; 
 					}
 

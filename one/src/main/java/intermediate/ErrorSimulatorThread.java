@@ -174,6 +174,7 @@ public class ErrorSimulatorThread implements Runnable{
 		
 		// To create the request, we have the sendData point to the receiveData
 		
+		int length = receivePacket.getLength();
 		
 		if(illegalTFTPOpcode) {
 			// Modify the send packet with invalid opcode
@@ -233,20 +234,23 @@ public class ErrorSimulatorThread implements Runnable{
 				n++;
 			}
 			
+			length = sendData.length;
+			
+			
 		}else { 
 			sendData = receiveData;
 		}
 		
-		
+		//sendData = receiveData;
 		
 		
 		// if the receivePacket address is the client send to the sever 
 		if(receivePacket.getAddress().equals(clientAddress) && receivePacket.getPort() == clientPort) {
-			sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress,serverPort);	
+			sendPacket = new DatagramPacket(sendData, length, serverAddress,serverPort);	
 			
 		}else {
 			// if not send to the client 
-			sendPacket = new DatagramPacket(sendData,  sendData.length, clientAddress, clientPort);
+			sendPacket = new DatagramPacket(sendData,  length, clientAddress, clientPort);
 		}
 	}
 	
