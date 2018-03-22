@@ -152,7 +152,20 @@ public class Client {
 		
 		// Wait until we receive the proper Acknowledge
 		while (true) {
-			receiveResponse();
+			try {
+				receiveResponse();
+			} catch (SocketTimeoutException e1) {
+				// Print an error message and stop
+				System.out.println("Server timed out.");
+				// Close the stream.
+				try {
+					stream.close();
+				} catch (IOException e) {
+					// Print a stack trace and stop
+					e.printStackTrace();
+				}
+				return;
+			}
 			// No printing if it isn't verbose.
 			if (verbose) {
 				printResponse();
@@ -179,12 +192,17 @@ public class Client {
 			}
 			
 			// Check if it's an acknowledge and it's block zero
-			if (receivePacket.getLength() == 4) {
+			else if (receivePacket.getLength() == 4) {
 				if ((receiveData[0] == 0) & (receiveData[1] == 4) &
 					(receiveData[2] == 0) &
 					(receiveData[3] == 0)) {
 					break;
 				}
+			} else {
+				// Send an illegal operation message to the sender.
+				// We will try to receive again, and probably retransmit.
+				TFTPCommons.sendError(4,sendReceiveSocket, verbose,
+						receivePacket.getAddress(), receivePacket.getPort());
 			}
 		}
 		
@@ -206,7 +224,7 @@ public class Client {
 		}
 	}
 
-	private void receiveResponse() {
+	private void receiveResponse() throws SocketTimeoutException {
 		// In this function, we create a new packet to store and incoming
 		// response,
 		// and store the incoming response.
@@ -221,6 +239,9 @@ public class Client {
 		// Surrounded with try-catch because receiving a message might fail.
 		try {
 			sendReceiveSocket.receive(receivePacket, verbose);
+		} catch (SocketTimeoutException e) {
+			// Raise this exception
+			throw e;
 		} catch (IOException e) {
 			// Print a stack trace, close the socket, and exit.
 			e.printStackTrace();
