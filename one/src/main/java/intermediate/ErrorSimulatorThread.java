@@ -340,16 +340,16 @@ public class ErrorSimulatorThread implements Runnable{
 				 errorSocket.send(sendPacket);
 			 
 				 //wait to receive the error message
-				 receiveData = new byte[TFTPCommons.max_buffer];
+				 byte[] receiveDataError = new byte[TFTPCommons.max_buffer];
 					
 					// Create a packet for the incoming packet.
-				receivePacket = new DatagramPacket(receiveData, receiveData.length);
+				DatagramPacket receivePacketError = new DatagramPacket(receiveDataError, receiveDataError.length);
 					
 					// Receive a message from the reception socket.
 					// Surrounded with try-catch because receiving a message might fail.
 				try {
 					System.out.println("Waiting for response");
-					errorSocket.receive(receivePacket);
+					errorSocket.receive(receivePacketError);
 				} catch (IOException e) {
 					// Print a stack trace, close the socket, and exit.
 					e.printStackTrace();
@@ -360,7 +360,7 @@ public class ErrorSimulatorThread implements Runnable{
 				System.out.println("Closing the error socket");
 				// for now just print out the message on the packet should be the error code 
 				if(IntermediateControl.verboseMode) {
-					printRequest();
+					TFTPCommons.printMessage(false, receiveDataError, receivePacketError.getLength());
 				}
 				unknownTID = false;
 				
