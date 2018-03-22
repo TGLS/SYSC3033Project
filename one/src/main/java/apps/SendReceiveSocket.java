@@ -69,7 +69,9 @@ public class SendReceiveSocket {
 		if ((sendPacket.getData()[0] == 0) & (sendPacket.getData()[1] == 4)) {
 			// Clear the previousPacket
 			previousPacket = null;
-		} else {
+		} else if ((sendPacket.getData()[0] == 0) & (sendPacket.getData()[1] == 5)) {
+			// Do nothing. We are either sending a bad TID error or a terminal error
+		} else  {
 			// Keep a reference of the previous packet handy.
 			previousPacket = sendPacket;
 		}
