@@ -192,17 +192,16 @@ public class Client {
 			}
 			
 			// Check if it's an acknowledge and it's block zero
-			else if (receivePacket.getLength() == 4) {
-				if ((receiveData[0] == 0) & (receiveData[1] == 4) &
-					(receiveData[2] == 0) &
+			else if ((receiveData[0] == 0) & (receiveData[1] == 4) & (receivePacket.getLength() == 4)) {
+				if ((receiveData[2] == 0) &
 					(receiveData[3] == 0)) {
 					break;
 				}
 			} else {
-				// Send an illegal operation message to the sender.
-				// We will try to receive again, and probably retransmit.
+				// Send an illegal operation message to the sender and quit.
 				TFTPCommons.sendError(4,sendReceiveSocket, verbose,
 						receivePacket.getAddress(), receivePacket.getPort());
+				return;
 			}
 		}
 		
