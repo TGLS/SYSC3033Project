@@ -285,8 +285,9 @@ public class TFTPCommons {
 						return false;
 					}
 					
-					// If we get the previous data packet, respond the previous ACK
+					// For data packets,
 					else if ((receiveData[0] == 0) & (receiveData[1] == 3)) {
+						// If we get the previous data packet, respond the previous ACK
 						if ((receiveData[2] == previousBlockCounter[0]) &
 							(receiveData[3] == previousBlockCounter[1])) {
 							// Then we respond with an acknowledge.
@@ -301,11 +302,8 @@ public class TFTPCommons {
 						
 							sendReceiveSocket.send(respondPacket);
 						}
-					}
-					
-					// Check if it's a data packet
-					// And whether if its block counter matches
-					else if ((receiveData[0] == 0) & (receiveData[1] == 3) & (receivePacket.getLength() >= 4)) {
+						
+						// If its block counter matches
 						if ((receiveData[2] == blockCounter[0]) &
 							(receiveData[3] == blockCounter[1])) {
 							// If it does, append the data block, if any
