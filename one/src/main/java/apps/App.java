@@ -44,21 +44,21 @@ public class App
     	try {
     		if (args[0].equals("server")) {
     			if (incomingPort == -1) {
-    				incomingPort = 69;
+    				incomingPort = 23;
     			}
         		Server s = new Server(incomingPort, verbose);
         	
         	} else if (args[0].equals("intermediate")) {
         		if (incomingPort == -1) {
-    				incomingPort = 23;
+    				incomingPort = 69;
     			}
         		if (outgoingPort == -1) {
-        			outgoingPort = 69;
+        			outgoingPort = 23;
     			}
         		Intermediate i = new Intermediate(incomingPort, outgoingIP, outgoingPort, verbose);
         	} else if (args[0].equals("client")) {
         		if (outgoingPort == -1) {
-        			outgoingPort = 23;
+        			outgoingPort = 69;
     			}
         		Client c = new Client(outgoingIP, outgoingPort, verbose);
         		c.loop();

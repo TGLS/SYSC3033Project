@@ -53,7 +53,7 @@ public class Server {
 			if(commandIn.equals("shutdown")) {
 				ServerControl.serverStop = true;
 				System.out.println("The Shut Down will now commence");
-				break;
+				System.exit(0);
 				
 			//if verbose is entered, signal verbose mode.
 			}else if(commandIn.equals("verbose")) {

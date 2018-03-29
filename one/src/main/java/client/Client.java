@@ -69,12 +69,21 @@ public class Client {
 				System.exit(0);
 			} else if (command.equals("verbose")) {
 				verbose = true;
-			} else if (command.equals("help")) {
+			} else if (command.split(" ")[0].equals("changeDestination")) {
+				try {
+					destinationAddress = InetAddress.getByName(command.split(" ")[1]);
+					System.out.println("Changed destination to: " + destinationAddress.toString());
+				} catch (UnknownHostException e) {
+					System.out.println("Error changing destination.");
+				}
+			}
+			else if (command.equals("help")) {
 				System.out.println("Valid commands are:");
 				System.out.println("verbose");
 				System.out.println("quiet");
 				System.out.println("read [filename]");
 				System.out.println("write [filename]");
+				System.out.println("changeDestination [destination IP/hostname]");
 				System.out.println("shutdown");
 			} else {
 				System.out.println("Invalid command.");
